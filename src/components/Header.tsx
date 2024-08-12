@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { GoSidebarCollapse } from "react-icons/go";
+import { formatTime } from "../util/Other";
 
 const Header = () => {
   const [timeUsed, setTimeUsed] = useState<number>(0);
@@ -16,12 +18,15 @@ const Header = () => {
   return (
     <div className="w-full h-8 border-b border-b-neutral-300 bg-pink-50">
       <div className="flex px-2 w-full h-full items-center justify-between">
-        <div className="items-center">
-          <p className="text-base/8">Ordklu</p>
+        <div className="flex items-center">
+          <button className="text-neutral-700">
+            <GoSidebarCollapse />
+          </button>
         </div>
 
-        <div>
-          <p>Tid brukt: {timeUsed}s</p>
+        <div className="flex space-x-2">
+          <p className="text-neutral-700 text-base/8">Tid brukt: {formatTime(timeUsed)}</p>
+
         </div>
       </div>
     </div>

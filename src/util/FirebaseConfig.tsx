@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_APIKEY,
@@ -13,6 +13,4 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-// @ts-expect-error is a fake
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const analytics = getAnalytics(app);
+export const db = getFirestore(app);

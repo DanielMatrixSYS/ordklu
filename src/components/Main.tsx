@@ -1,7 +1,7 @@
 import LetterBox from "./LetterBox";
 import { useEffect, useState, useCallback } from "react";
 import KeyboardButton from "./KeyboardButton";
-
+import { getRandomWord } from "../util/FirebaseFunctions";
 import { FaBackspace } from "react-icons/fa";
 
 const alphabetRowOne = "QWERTYUIOP";
@@ -129,11 +129,9 @@ const Main = () => {
   const [attempts, setAttempts] = useState<string[][]>(
     Array.from({ length: rows }, () => Array(columns).fill("")),
   );
-  const [answer, setAnswer] = useState<string>(
-    wordList[Math.floor(Math.random() * wordList.length)].toUpperCase(),
-  );
+  const [answer, setAnswer] = useState<string>("");
 
-  const handleLetterClick = (letter: string) => {
+  const handleLetterClick = useCallback((letter: string) => {
     const newAttempts = [...attempts];
     newAttempts[currentRow][currentColumn] = letter.toUpperCase();
 
@@ -142,7 +140,7 @@ const Main = () => {
     if (currentColumn < columns - 1) {
       setCurrentColumn((prev) => prev + 1);
     }
-  };
+  }, [attempts, currentRow, currentColumn, columns]);
 
   const handleEnterClick = useCallback(() => {
     const guess = attempts[currentRow].join("");
@@ -164,27 +162,35 @@ const Main = () => {
   }, [attempts, currentRow, columns, rows, answer]);
 
   const handleBackspaceClick = useCallback(() => {
-    if (currentColumn > 0) {
+    if (currentColumn >= 0) {
       const newAttempts = [...attempts];
       newAttempts[currentRow][currentColumn] = "";
+
       setAttempts(newAttempts);
-      setCurrentColumn((prev) => prev - 1);
+
+      if (currentColumn > 0) {
+        setCurrentColumn((prev: number) => prev - 1);
+      }
     }
   }, [currentColumn, attempts, currentRow]);
 
   const handleKeyboardEvent = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === "ArrowRight" && currentColumn < columns - 1) {
-        setCurrentColumn((prev) => prev + 1);
+        setCurrentColumn((prev: number) => prev + 1);
       } else if (e.key === "ArrowLeft" && currentColumn > 0) {
-        setCurrentColumn((prev) => prev - 1);
+        setCurrentColumn((prev: number) => prev - 1);
       } else if (e.key === "Enter") {
         handleEnterClick();
       } else if (e.key === "Backspace") {
         handleBackspaceClick();
+      } else if (e.key.search(/[a-zA-ZÆØÅæøå]/) !== -1) {
+        if (e.key.length === 1) {
+            handleLetterClick(e.key);
+        }
       }
     },
-    [currentColumn, columns, handleEnterClick, handleBackspaceClick],
+    [currentColumn, columns, handleEnterClick, handleBackspaceClick, handleLetterClick],
   );
 
   useEffect(() => {
@@ -194,6 +200,16 @@ const Main = () => {
       document.removeEventListener("keydown", handleKeyboardEvent);
     };
   }, [handleKeyboardEvent]);
+
+  useEffect(() => {
+    const getWord = async (): Promise<string> => {
+      return await getRandomWord({ length: 5, category: "all" });
+    }
+
+    getWord().then((word) => {
+        setAnswer(word.toUpperCase());
+    });
+  }, []);
 
   return (
     <div className="flex flex-col flex-grow w-full items-center mt-4 bg-pink-50">
