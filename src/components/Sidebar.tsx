@@ -11,7 +11,7 @@ const Sidebar: React.FC<{
 
   return (
     <div
-      className={`fixed left-0 w-2/3 h-full z-50 transform transition-transform duration-300 ease-in-out ${
+      className={`fixed w-2/3 h-full z-50 transform transition-transform duration-300 ease-in-out ${
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       } backdrop-blur-lg bg-black/20 border border-white/70 shadow-2xl`}
     >
