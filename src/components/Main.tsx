@@ -2,6 +2,7 @@ import LetterBox from "./LetterBox";
 import { useEffect, useState, useCallback } from "react";
 import KeyboardButton from "./KeyboardButton";
 import { getRandomWord } from "../util/FirebaseFunctions";
+import "../index.css";
 import { FaBackspace, FaSpinner } from "react-icons/fa";
 
 const alphabetRowOne = "QWERTYUIOP";
@@ -18,6 +19,7 @@ const Main = () => {
   );
   const [answer, setAnswer] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
+  const [won, setWon] = useState<boolean>(false);
 
   const handleLetterClick = useCallback(
     (letter: string) => {
@@ -48,7 +50,8 @@ const Main = () => {
         console.log("You lost!");
       }
     } else {
-      alert("You won!");
+      setCurrentRow((prev) => prev + 1);
+      setWon(true);
     }
   }, [attempts, currentRow, columns, rows, answer]);
 
@@ -119,68 +122,83 @@ const Main = () => {
       )}
 
       <div className="flex flex-col items-center space-y-2">
-        {loading ? (
+        {Array.from({ length: rows }).map((_, i) => (
+          <div key={i} className="flex space-x-2">
+            {Array.from({ length: columns }).map((_, j) => (
+              <LetterBox
+                key={j}
+                name={`${i}${j}`}
+                hasFocus={i === currentRow && j === currentColumn}
+                answer={answer}
+                guessedLetter={attempts[i][j]}
+                hasGuessed={i < currentRow}
+                guessedLettersArray={attempts[i]}
+                loading={loading}
+                hasWon={won}
+              />
+            ))}
+          </div>
+        ))}
+
+        {loading && (
           <div className="flex space-x-2 items-center">
             <p className="text-base/8 text-neutral-700">Henter nytt ord...</p>
-            <FaSpinner className="spinning text-neutral-700" />
+            <FaSpinner className="animate-spin text-neutral-700" />
           </div>
-        ) : (
-          <>
-            {Array.from({ length: rows }).map((_, i) => (
-              <div key={i} className="flex space-x-2">
-                {Array.from({ length: columns }).map((_, j) => (
-                  <LetterBox
-                    key={j}
-                    name={`${i}${j}`}
-                    hasFocus={i === currentRow && j === currentColumn}
-                    answer={answer}
-                    guessedLetter={attempts[i][j]}
-                    hasGuessed={i < currentRow}
-                    guessedLettersArray={attempts[i]}
-                  />
-                ))}
-              </div>
-            ))}
-          </>
+        )}
+
+        {won && (
+          <div className="flex space-x-2 items-center">
+            <p className="text-base/8 text-green-600">
+              Gratulerer, du klarte det!
+            </p>
+          </div>
         )}
       </div>
 
-      <div className="flex flex-col my-4 space-y-4">
-        <div className="flex flex-wrap w-full space-x-2 items-center justify-center">
-          {alphabetRowOne.split("").map((letter, i) => (
-            <KeyboardButton
-              value={letter}
-              OnClick={() => handleLetterClick(letter)}
-              key={i}
-            />
-          ))}
-        </div>
+      <div className="flex flex-col my-4 space-y-4 w-full">
+        {!won && (
+          <>
+            <div className="flex flex-wrap w-full space-x-2 items-center justify-center">
+              {alphabetRowOne.split("").map((letter, i) => (
+                <KeyboardButton
+                  value={letter}
+                  OnClick={() => handleLetterClick(letter)}
+                  key={i}
+                  loading={loading}
+                />
+              ))}
+            </div>
 
-        <div className="flex flex-wrap w-full space-x-2 items-center justify-center">
-          {alphabetRowTwo.split("").map((letter, i) => (
-            <KeyboardButton
-              value={letter}
-              OnClick={() => handleLetterClick(letter)}
-              key={i}
-            />
-          ))}
-        </div>
+            <div className="flex flex-wrap w-full space-x-2 items-center justify-center">
+              {alphabetRowTwo.split("").map((letter, i) => (
+                <KeyboardButton
+                  value={letter}
+                  OnClick={() => handleLetterClick(letter)}
+                  key={i}
+                  loading={loading}
+                />
+              ))}
+            </div>
 
-        <div className="flex flex-wrap w-full space-x-2 items-center justify-center">
-          {alphabetRowThree.split("").map((letter, i) => (
-            <KeyboardButton
-              value={letter}
-              OnClick={() => handleLetterClick(letter)}
-              key={i}
-            />
-          ))}
-          <button
-            onClick={handleBackspaceClick}
-            className="flex bg-neutral-100 items-center justify-center border w-10 h-14"
-          >
-            <FaBackspace />
-          </button>
-        </div>
+            <div className="flex flex-wrap w-full space-x-2 items-center justify-center">
+              {alphabetRowThree.split("").map((letter, i) => (
+                <KeyboardButton
+                  value={letter}
+                  OnClick={() => handleLetterClick(letter)}
+                  key={i}
+                  loading={loading}
+                />
+              ))}
+              <button
+                onClick={handleBackspaceClick}
+                className="flex bg-neutral-100 items-center justify-center border w-10 h-14"
+              >
+                <FaBackspace />
+              </button>
+            </div>
+          </>
+        )}
 
         <div className="flex flex-col items-center justify-center w-full space-y-2">
           <button

@@ -1,13 +1,18 @@
 import { GoSidebarExpand } from "react-icons/go";
 import React from "react";
-
+import { PageName } from "../App.tsx";
 import Button from "./Button";
 
 const Sidebar: React.FC<{
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
-}> = ({ sidebarOpen, setSidebarOpen }) => {
-  const buttons = ["Start", "Stopp", "Nullstill"];
+  setPage: (page: PageName) => void;
+}> = ({ sidebarOpen, setSidebarOpen, setPage }) => {
+  const buttonsAndPages: Record<string, PageName | "lukk"> = {
+    Hovedmeny: "main",
+    Spill: "game",
+    Lukk: "lukk",
+  };
 
   return (
     <div
@@ -27,10 +32,21 @@ const Sidebar: React.FC<{
       </div>
 
       <hr className="border-neutral-400" />
-
       <div className="flex flex-col space-y-2 p-2">
-        {buttons.map((name: string, i: number) => (
-          <Button value={name} key={i} />
+        {Object.keys(buttonsAndPages).map((buttonName) => (
+          <Button
+            key={buttonName}
+            value={buttonName}
+            onClick={() => {
+              if (buttonsAndPages[buttonName] === "lukk") {
+                setSidebarOpen(false);
+                return;
+              }
+
+              setPage(buttonsAndPages[buttonName]);
+              setSidebarOpen(false);
+            }}
+          />
         ))}
       </div>
     </div>
