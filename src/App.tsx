@@ -9,7 +9,7 @@ function App() {
   const [page, setPage] = useState<PageName>("main");
 
   const pages: Record<PageName, React.ReactNode> = {
-    main: <MainMenu />,
+    main: <MainMenu setPage={setPage} />,
     game: <Main />,
   };
 

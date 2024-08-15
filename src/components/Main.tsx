@@ -93,6 +93,11 @@ const Main = () => {
     ],
   );
 
+  const shouldDisplayKeyboard = () => {
+    if (won) return false;
+    return currentRow - 1 !== rows - 1;
+  };
+
   useEffect(() => {
     document.addEventListener("keydown", handleKeyboardEvent);
 
@@ -117,10 +122,6 @@ const Main = () => {
 
   return (
     <div className="flex flex-col flex-grow w-full items-center mt-4 bg-pink-50">
-      {currentRow - 1 === 4 && (
-        <p className="text-2xl/8">Spillet er ferdig. Svaret er: {answer}</p>
-      )}
-
       <div className="flex flex-col items-center space-y-2">
         {Array.from({ length: rows }).map((_, i) => (
           <div key={i} className="flex space-x-2">
@@ -154,10 +155,21 @@ const Main = () => {
             </p>
           </div>
         )}
+
+        {currentRow - 1 === rows - 1 && !won && (
+          <div className="flex flex-col items-center">
+            <p className="text-base/8 text-red-600">
+              Beklager, du klarte det ikke :(
+            </p>
+            <p className="text-sm text-neutral-700">
+              Riktig svar var: {answer}
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col my-4 space-y-4 w-full">
-        {!won && (
+        {shouldDisplayKeyboard() && (
           <>
             <div className="flex flex-wrap w-full space-x-2 items-center justify-center">
               {alphabetRowOne.split("").map((letter, i) => (
@@ -201,22 +213,33 @@ const Main = () => {
         )}
 
         <div className="flex flex-col items-center justify-center w-full space-y-2">
-          <button
-            className="flex items-center rounded-full justify-center h-10 border w-1/2 bg-pink-200"
-            onClick={handleEnterClick}
-          >
-            Sjekk
-          </button>
+          {!won && currentRow - 1 < rows - 1 && (
+            <button
+              className="flex items-center rounded-full justify-center h-10 border w-1/2 bg-pink-200 active:bg-pink-300"
+              onClick={handleEnterClick}
+            >
+              Sjekk
+            </button>
+          )}
 
           <button
-            className="flex items-center rounded-full justify-center h-10 border w-1/2 text-sm text-neutral-800/90 bg-transparent"
-            onClick={() => {
+            className={`flex items-center rounded-full justify-center h-10 border w-1/2 text-sm text-neutral-800/90 ${won || currentRow - 1 === rows - 1 ? "bg-pink-300/80 active:bg-pink-400/80" : "bg-transparent"}`}
+            onClick={async () => {
+              setLoading(true);
               setAttempts(
                 Array.from({ length: rows }, () => Array(columns).fill("")),
               );
 
               setCurrentRow(0);
               setCurrentColumn(0);
+              setWon(false);
+
+              await getRandomWord({ length: 5, category: "all" }).then(
+                (word: string) => {
+                  setAnswer(word.toUpperCase());
+                  setLoading(false);
+                },
+              );
             }}
           >
             Gi meg nytt ord

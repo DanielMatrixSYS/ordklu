@@ -11,6 +11,9 @@ const Sidebar: React.FC<{
   const buttonsAndPages: Record<string, PageName | "lukk"> = {
     Hovedmeny: "main",
     Spill: "game",
+    Resultattavle: "main",
+    Innstillinger: "main",
+    Hjelp: "main",
     Lukk: "lukk",
   };
 
