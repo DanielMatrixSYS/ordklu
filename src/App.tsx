@@ -1,9 +1,11 @@
 import Main from "./components/Main";
 import MainMenu from "./components/MainMenu";
 import Header from "./components/Header";
+import Login from "./components/Login";
+import Register from "./components/Register";
 import React, { useState } from "react";
 
-export type PageName = "main" | "game";
+export type PageName = "main" | "game" | "login" | "register";
 
 function App() {
   const [page, setPage] = useState<PageName>("main");
@@ -11,6 +13,8 @@ function App() {
   const pages: Record<PageName, React.ReactNode> = {
     main: <MainMenu setPage={setPage} />,
     game: <Main />,
+    login: <Login setPage={setPage} />,
+    register: <Register setPage={setPage} />,
   };
 
   return (

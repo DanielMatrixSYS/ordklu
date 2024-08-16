@@ -14,6 +14,7 @@ const Sidebar: React.FC<{
     Resultattavle: "main",
     Innstillinger: "main",
     Hjelp: "main",
+    "Login / Registrer": "login",
     Lukk: "lukk",
   };
 

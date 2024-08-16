@@ -1,9 +1,10 @@
 import LetterBox from "./LetterBox";
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import KeyboardButton from "./KeyboardButton";
 import { getRandomWord } from "../util/FirebaseFunctions";
 import "../index.css";
 import { FaBackspace, FaSpinner } from "react-icons/fa";
+import { IoMdReturnLeft } from "react-icons/io";
 
 const alphabetRowOne = "QWERTYUIOP";
 const alphabetRowTwo = "ASDFGHJKL";
@@ -166,9 +167,20 @@ const Main = () => {
             </p>
           </div>
         )}
+
+        {!won &&
+          currentRow - 1 < rows - 1 &&
+          attempts[currentRow].join("").length === columns && (
+            <button
+              className="flex items-center rounded-full justify-center h-10 border w-1/2 md:w-64 bg-pink-200 active:bg-pink-300"
+              onClick={handleEnterClick}
+            >
+              Sjekk
+            </button>
+          )}
       </div>
 
-      <div className="flex flex-col my-4 space-y-4 w-full">
+      <div className="flex flex-col mt-2 space-y-4 w-full">
         {shouldDisplayKeyboard() && (
           <>
             <div className="flex flex-wrap w-full space-x-2 items-center justify-center">
@@ -194,6 +206,13 @@ const Main = () => {
             </div>
 
             <div className="flex flex-wrap w-full space-x-2 items-center justify-center">
+              <button
+                onClick={handleEnterClick}
+                className="flex bg-neutral-100 items-center justify-center border w-10 h-14"
+              >
+                <IoMdReturnLeft />
+              </button>
+
               {alphabetRowThree.split("").map((letter, i) => (
                 <KeyboardButton
                   value={letter}
@@ -202,6 +221,7 @@ const Main = () => {
                   loading={loading}
                 />
               ))}
+
               <button
                 onClick={handleBackspaceClick}
                 className="flex bg-neutral-100 items-center justify-center border w-10 h-14"
@@ -213,18 +233,15 @@ const Main = () => {
         )}
 
         <div className="flex flex-col items-center justify-center w-full space-y-2">
-          {!won && currentRow - 1 < rows - 1 && (
-            <button
-              className="flex items-center rounded-full justify-center h-10 border w-1/2 bg-pink-200 active:bg-pink-300"
-              onClick={handleEnterClick}
-            >
-              Sjekk
-            </button>
-          )}
-
           <button
             className={`flex items-center rounded-full justify-center h-10 border w-1/2 text-sm text-neutral-800/90 ${won || currentRow - 1 === rows - 1 ? "bg-pink-300/80 active:bg-pink-400/80" : "bg-transparent"}`}
-            onClick={async () => {
+            onClick={async (e: React.MouseEvent<HTMLButtonElement>) => {
+              // Remove focus from the button.
+              // So the user can use the keyboard to play the game.
+              if (e.currentTarget) {
+                e.currentTarget.blur();
+              }
+
               setLoading(true);
               setAttempts(
                 Array.from({ length: rows }, () => Array(columns).fill("")),

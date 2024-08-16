@@ -13,7 +13,7 @@ const KeyboardButton: React.FC<KeyboardButtonProps> = ({
 }) => {
   return (
     <button
-      className="bg-neutral-100 border w-7 h-14 text-lg font-bold md:hover:bg-blue-700 active:bg-blue-700 transition-all duration-200 ease-in-out"
+      className={`bg-neutral-100 border w-7 h-14 text-lg font-bold md:hover:bg-blue-700 active:bg-blue-700 transition-all duration-200 ease-in-out rounded`}
       onClick={OnClick}
       disabled={loading}
     >

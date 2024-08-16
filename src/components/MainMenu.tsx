@@ -17,10 +17,6 @@ const MainMenu: React.FC<{ setPage: (page: PageName) => void }> = ({
           </h1>
         </div>
 
-        <p className="text-xs mt-4 text-center">
-          Hver dag venter en ny gåte. Klarer du å løse den?
-        </p>
-
         <div className="flex items-center flex-col mt-4 space-y-1">
           <p className="flex items-center text-xs text-center">
             <span className="text-lg text-neutral-700 mr-1">10 324</span>
@@ -35,21 +31,21 @@ const MainMenu: React.FC<{ setPage: (page: PageName) => void }> = ({
 
       <div className="flex flex-col items-center mt-28 w-full">
         <button
-          className="px-8 w-2/3 py-2 bg-blue-500 text-white rounded-full"
+          className="px-8 w-2/3 md:w-64 py-2 bg-blue-500 text-white rounded-full hover:scale-105 transition-all duration-300"
           onClick={() => setPage("game")}
         >
           Gjett nå!
         </button>
 
         <button
-          className="px-8 py-2 w-2/3 bg-transparent border border-neutral-400 text-neutral-700 rounded-full mt-4"
+          className="px-8 py-2 w-2/3 md:w-64 bg-transparent border border-neutral-400 text-neutral-700 rounded-full mt-4 hover:scale-105 transition-all duration-300"
           onClick={() => alert("Not implemented yet!")}
         >
           Sjekk ut resultattavla
         </button>
 
         <button
-          className="mt-4 px-4 py-2 w-2/3 border border-neutral-400 bg-transparent text-neutral-700 rounded-full"
+          className="mt-4 px-4 py-2 w-2/3 md:w-64 border border-neutral-400 bg-transparent text-neutral-700 rounded-full hover:scale-105 transition-all duration-300"
           onClick={() => alert("Not implemented yet!")}
         >
           Sett opp regler selv
