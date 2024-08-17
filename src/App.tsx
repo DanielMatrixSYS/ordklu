@@ -1,26 +1,30 @@
-import Main from "./components/Main";
-import MainMenu from "./components/MainMenu";
 import Header from "./components/Header";
-import Login from "./components/Login";
-import Register from "./components/Register";
-import React, { useState } from "react";
+import { lazy, ReactNode, Suspense, useState } from "react";
 
-export type PageName = "main" | "game" | "login" | "register";
+const Main = lazy(() => import("./components/Main"));
+const MainMenu = lazy(() => import("./components/MainMenu"));
+const Login = lazy(() => import("./components/Login"));
+const Register = lazy(() => import("./components/Register"));
+
+export type PageName = "main" | "game" | "login" | "register" | "profile";
 
 function App() {
   const [page, setPage] = useState<PageName>("main");
 
-  const pages: Record<PageName, React.ReactNode> = {
+  const pages: Record<PageName, ReactNode> = {
     main: <MainMenu setPage={setPage} />,
     game: <Main />,
     login: <Login setPage={setPage} />,
     register: <Register setPage={setPage} />,
+    profile: <MainMenu setPage={setPage} />,
   };
 
   return (
     <div className="flex flex-col items-center bg-pink-50 w-full h-screen">
       <Header setPage={setPage} />
-      {pages[page] || <div>Error: Page not found</div>}
+      <Suspense fallback={<div>Laster inn...</div>}>
+        {pages[page] || <div>Error: Page not found</div>}
+      </Suspense>
     </div>
   );
 }

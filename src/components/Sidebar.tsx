@@ -1,21 +1,70 @@
 import { GoSidebarExpand } from "react-icons/go";
-import React from "react";
+import React, { useContext, useMemo } from "react";
 import { PageName } from "../App.tsx";
 import Button from "./Button";
+import { AuthContext, AuthContextProps } from "./Auth/AuthContext.tsx";
+import { getAuth, signOut } from "firebase/auth";
+
+type ActionType = "Lukk" | "Logout";
+type PageType = PageName;
+
+type SidebarAction = ActionType | PageType;
+
+interface SidebarButton {
+  name: string;
+  action: SidebarAction;
+}
 
 const Sidebar: React.FC<{
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
   setPage: (page: PageName) => void;
 }> = ({ sidebarOpen, setSidebarOpen, setPage }) => {
-  const buttonsAndPages: Record<string, PageName | "lukk"> = {
-    Hovedmeny: "main",
-    Spill: "game",
-    Resultattavle: "main",
-    Innstillinger: "main",
-    Hjelp: "main",
-    "Login / Registrer": "login",
-    Lukk: "lukk",
+  const { user } = useContext(AuthContext) as AuthContextProps;
+
+  const sidebarButtons = useMemo<SidebarButton[]>(() => {
+    const buttons: SidebarButton[] = [
+      { name: "Hjem", action: "main" },
+      { name: "Spill", action: "game" },
+    ];
+
+    if (user) {
+      buttons.push(
+        { name: "Profil", action: "profile" },
+        { name: "Logout", action: "Logout" },
+      );
+    } else {
+      buttons.push({ name: "Logg inn", action: "login" });
+    }
+
+    buttons.push({ name: "Lukk", action: "Lukk" });
+
+    return buttons;
+  }, [user]);
+
+  const handleButtonClick = (action: SidebarAction) => {
+    if (action === "Lukk") {
+      setSidebarOpen(false);
+
+      return;
+    }
+
+    if (action === "Logout") {
+      const auth = getAuth();
+
+      signOut(auth)
+        .then(() => {
+          console.log("Signed out");
+        })
+        .catch((error) => {
+          console.log("Error signing out: ", error);
+        });
+
+      return;
+    }
+
+    setPage(action);
+    setSidebarOpen(false);
   };
 
   return (
@@ -37,19 +86,11 @@ const Sidebar: React.FC<{
 
       <hr className="border-neutral-400" />
       <div className="flex flex-col space-y-2 p-2">
-        {Object.keys(buttonsAndPages).map((buttonName) => (
+        {sidebarButtons.map((button, index) => (
           <Button
-            key={buttonName}
-            value={buttonName}
-            onClick={() => {
-              if (buttonsAndPages[buttonName] === "lukk") {
-                setSidebarOpen(false);
-                return;
-              }
-
-              setPage(buttonsAndPages[buttonName]);
-              setSidebarOpen(false);
-            }}
+            key={index}
+            value={button.name}
+            onClick={() => handleButtonClick(button.action)}
           />
         ))}
       </div>

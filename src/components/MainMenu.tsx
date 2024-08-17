@@ -31,21 +31,21 @@ const MainMenu: React.FC<{ setPage: (page: PageName) => void }> = ({
 
       <div className="flex flex-col items-center mt-28 w-full">
         <button
-          className="px-8 w-2/3 md:w-64 py-2 bg-blue-500 text-white rounded-full hover:scale-105 transition-all duration-300"
+          className="px-8 w-2/3 sm:w-96 py-2 bg-blue-500 text-white rounded-full hover:scale-105 transition-all duration-300"
           onClick={() => setPage("game")}
         >
           Gjett nå!
         </button>
 
         <button
-          className="px-8 py-2 w-2/3 md:w-64 bg-transparent border border-neutral-400 text-neutral-700 rounded-full mt-4 hover:scale-105 transition-all duration-300"
+          className="px-8 py-2 w-2/3 sm:w-96 border border-blue-700 text-sm text-blue-700 active:bg-blue-300 rounded-full bg-transparent mt-4 hover:scale-105 transition-all duration-300"
           onClick={() => alert("Not implemented yet!")}
         >
           Sjekk ut resultattavla
         </button>
 
         <button
-          className="mt-4 px-4 py-2 w-2/3 md:w-64 border border-neutral-400 bg-transparent text-neutral-700 rounded-full hover:scale-105 transition-all duration-300"
+          className="px-8 py-2 w-2/3 sm:w-96 border border-blue-700 text-sm text-blue-700 active:bg-blue-300 rounded-full bg-transparent mt-4 hover:scale-105 transition-all duration-300"
           onClick={() => alert("Not implemented yet!")}
         >
           Sett opp regler selv

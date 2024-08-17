@@ -1,12 +1,41 @@
-import React from "react";
+import React, { useState } from "react";
 import { PageName } from "../App.tsx";
+import { registerUser } from "../util/FirebaseFunctions.tsx";
 
 const Register: React.FC<{ setPage: (page: PageName) => void }> = ({
   setPage,
 }) => {
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const [username, setUsername] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const shouldContinue = (): boolean => {
+    if (!username || !email || !password) return false;
+    if (username.length < 3) return false;
+    if (password.length < 6) return false;
+
+    return !loading;
+  };
+
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Submitted");
+
+    console.log("Registering user: ", username, shouldContinue());
+
+    if (!shouldContinue()) return;
+    setLoading(true);
+
+    const result = await registerUser({ username, email, password });
+
+    if (result) {
+      setLoading(false);
+      setPage("main");
+
+      return;
+    }
+
+    setLoading(false);
   };
 
   return (
@@ -23,24 +52,34 @@ const Register: React.FC<{ setPage: (page: PageName) => void }> = ({
         </div>
         <form className="flex flex-col w-full space-y-2" onSubmit={onSubmit}>
           <input
+            disabled={loading}
+            value={username}
             type="text"
             placeholder="Brukernavn"
             className="p-2 border border-neutral-400 text-sm focus:outline-none rounded-md"
+            onChange={(e) => setUsername(e.target.value)}
           />
 
           <input
-            type="text"
+            disabled={loading}
+            value={email}
+            type="email"
             placeholder="E-post"
             className="p-2 border border-neutral-400 text-sm focus:outline-none rounded-md"
+            onChange={(e) => setEmail(e.target.value)}
           />
 
           <input
+            disabled={loading}
+            value={password}
             type="password"
             placeholder="Passord"
             className="p-2 border border-neutral-400 text-sm focus:outline-none rounded-md"
+            onChange={(e) => setPassword(e.target.value)}
           />
 
           <button
+            disabled={loading}
             type="submit"
             className="p-2 bg-blue-700 active:bg-blue-800 text-sm font-light text-white rounded-full"
           >
