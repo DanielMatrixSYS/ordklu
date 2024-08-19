@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { PageName } from "../App.tsx";
 import { registerUser } from "../util/FirebaseFunctions.tsx";
+import { FaSpinner } from "react-icons/fa";
 
 const Register: React.FC<{ setPage: (page: PageName) => void }> = ({
   setPage,
@@ -50,6 +51,7 @@ const Register: React.FC<{ setPage: (page: PageName) => void }> = ({
             Registrer deg for å beholde progresjonen
           </p>
         </div>
+
         <form className="flex flex-col w-full space-y-2" onSubmit={onSubmit}>
           <input
             disabled={loading}
@@ -83,7 +85,16 @@ const Register: React.FC<{ setPage: (page: PageName) => void }> = ({
             type="submit"
             className="p-2 bg-blue-700 active:bg-blue-800 text-sm font-light text-white rounded-full"
           >
-            Registrer deg
+            {loading ? (
+              <div className="flex items-center justify-center space-x-2">
+                <span className="text-neutral-100">Registrerer deg</span>
+                <span className="text-neutral-100">
+                  <FaSpinner className="animate-spin" />
+                </span>
+              </div>
+            ) : (
+              "Registrer deg"
+            )}
           </button>
         </form>
 

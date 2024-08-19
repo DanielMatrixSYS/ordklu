@@ -1,16 +1,17 @@
 import LetterBox from "./LetterBox";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, ReactElement } from "react";
 import KeyboardButton from "./KeyboardButton";
 import { getRandomWord } from "../util/FirebaseFunctions";
 import "../index.css";
 import { FaBackspace, FaSpinner } from "react-icons/fa";
 import { IoMdReturnLeft } from "react-icons/io";
+import { addSolvedWord } from "../util/FirebaseFunctions";
 
-const alphabetRowOne = "QWERTYUIOP";
-const alphabetRowTwo = "ASDFGHJKL";
+const alphabetRowOne = "QWERTYUIOPÅ";
+const alphabetRowTwo = "ASDFGHJKLÆØ";
 const alphabetRowThree = "ZXCVBNM";
 
-const Main = () => {
+const Main = (): ReactElement => {
   const [rows] = useState<number>(5);
   const [columns] = useState<number>(5);
   const [currentRow, setCurrentRow] = useState<number>(0);
@@ -23,20 +24,20 @@ const Main = () => {
   const [won, setWon] = useState<boolean>(false);
 
   const handleLetterClick = useCallback(
-    (letter: string) => {
+    (letter: string): void => {
       const newAttempts = [...attempts];
       newAttempts[currentRow][currentColumn] = letter.toUpperCase();
 
       setAttempts(newAttempts);
 
       if (currentColumn < columns - 1) {
-        setCurrentColumn((prev) => prev + 1);
+        setCurrentColumn((prev): number => prev + 1);
       }
     },
     [attempts, currentRow, currentColumn, columns],
   );
 
-  const handleEnterClick = useCallback(() => {
+  const handleEnterClick = useCallback((): void => {
     const guess = attempts[currentRow].join("");
 
     if (guess.length < columns) {
@@ -44,7 +45,7 @@ const Main = () => {
     }
 
     if (guess !== answer) {
-      setCurrentRow((prev) => prev + 1);
+      setCurrentRow((prev): number => prev + 1);
       setCurrentColumn(0);
 
       if (currentRow === rows - 1) {
@@ -53,10 +54,12 @@ const Main = () => {
     } else {
       setCurrentRow((prev) => prev + 1);
       setWon(true);
+
+      addSolvedWord(answer);
     }
   }, [attempts, currentRow, columns, rows, answer]);
 
-  const handleBackspaceClick = useCallback(() => {
+  const handleBackspaceClick = useCallback((): void => {
     if (currentColumn >= 0) {
       const newAttempts = [...attempts];
       newAttempts[currentRow][currentColumn] = "";
@@ -94,27 +97,27 @@ const Main = () => {
     ],
   );
 
-  const shouldDisplayKeyboard = () => {
+  const shouldDisplayKeyboard = (): boolean => {
     if (won) return false;
     return currentRow - 1 !== rows - 1;
   };
 
-  useEffect(() => {
+  useEffect((): (() => void) => {
     document.addEventListener("keydown", handleKeyboardEvent);
 
-    return () => {
+    return (): void => {
       document.removeEventListener("keydown", handleKeyboardEvent);
     };
   }, [handleKeyboardEvent]);
 
-  useEffect(() => {
+  useEffect((): void => {
     const getWord = async (): Promise<string> => {
       setLoading(true);
 
       return await getRandomWord({ length: 5, category: "all" });
     };
 
-    getWord().then((word) => {
+    getWord().then((word): void => {
       setAnswer(word.toUpperCase());
     });
 
@@ -187,7 +190,7 @@ const Main = () => {
               {alphabetRowOne.split("").map((letter, i) => (
                 <KeyboardButton
                   value={letter}
-                  OnClick={() => handleLetterClick(letter)}
+                  OnClick={(): void => handleLetterClick(letter)}
                   key={i}
                   loading={loading}
                 />
@@ -198,7 +201,7 @@ const Main = () => {
               {alphabetRowTwo.split("").map((letter, i) => (
                 <KeyboardButton
                   value={letter}
-                  OnClick={() => handleLetterClick(letter)}
+                  OnClick={(): void => handleLetterClick(letter)}
                   key={i}
                   loading={loading}
                 />
@@ -216,7 +219,7 @@ const Main = () => {
               {alphabetRowThree.split("").map((letter, i) => (
                 <KeyboardButton
                   value={letter}
-                  OnClick={() => handleLetterClick(letter)}
+                  OnClick={(): void => handleLetterClick(letter)}
                   key={i}
                   loading={loading}
                 />

@@ -14,3 +14,7 @@ export const formatTime = (seconds: number): string => {
     return `${hours} time${hours === 1 ? "" : "r"}, ${remainingMinutes} minutt${remainingMinutes === 1 ? "" : "er"} og ${remainingSeconds} sekund${remainingSeconds === 1 ? "" : "er"}`;
   }
 };
+
+export const shuffleArray = (array: string[]): string[] => {
+  return array.sort(() => Math.random() - 0.5);
+};

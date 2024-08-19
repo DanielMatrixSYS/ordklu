@@ -1,20 +1,11 @@
 import { db } from "./FirebaseConfig";
 import {
-  collection,
-  query,
-  where,
-  getDocs,
-  doc,
-  setDoc,
-} from "firebase/firestore";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+  createUserWithEmailAndPassword,
+  getAuth,
+  updateProfile,
+} from "firebase/auth";
 import { auth } from "./FirebaseConfig";
 import { UserCredential } from "firebase/auth";
-
-interface RandomWordProps {
-  length: number;
-  category: string;
-}
 
 interface UserProps {
   username: string;
@@ -22,24 +13,166 @@ interface UserProps {
   password: string;
 }
 
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  getDocs,
+  setDoc,
+  doc,
+  getDoc,
+} from "firebase/firestore";
+
+type RandomWordProps = {
+  length: number;
+  category: string;
+};
+
+export const addSolvedWord = async (word: string): Promise<void> => {
+  const auth = getAuth();
+  const uid = auth.currentUser?.uid;
+
+  if (!uid) {
+    const solvedWords = JSON.parse(
+      sessionStorage.getItem("solvedWords") || "[]",
+    ) as string[];
+
+    solvedWords.push(word);
+
+    sessionStorage.setItem("solvedWords", JSON.stringify(solvedWords));
+
+    return;
+  }
+
+  try {
+    const docRef = doc(db, "users", uid);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      await setDoc(doc(db, "users", uid), {
+        solved: [word],
+        totalSolved: 1,
+      });
+
+      return;
+    }
+
+    const solvedWords = docSnap.data().solved;
+    solvedWords.push(word);
+
+    await setDoc(docRef, {
+      solved: solvedWords,
+      totalSolved: solvedWords.length,
+    });
+
+    return;
+  } catch (error) {
+    console.error(error);
+  }
+
+  return;
+};
+
+const getSolvedWords = async (): Promise<string[]> => {
+  const auth = getAuth();
+  const uid = auth.currentUser?.uid;
+
+  if (!uid) {
+    return JSON.parse(
+      sessionStorage.getItem("solvedWords") || "[]",
+    ) as string[];
+  }
+
+  try {
+    const docRef = doc(db, "users", uid);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      return [];
+    }
+
+    return docSnap.data().solved;
+  } catch (error) {
+    console.error(error);
+  }
+
+  return [];
+};
+
+/*const getTotalSolvedWords = async (): Promise<number> => {
+  const auth = getAuth();
+  const uid = auth.currentUser?.uid;
+
+  if (!uid) {
+    const words = JSON.parse(sessionStorage.getItem("solvedWords") || "[]");
+    return words.length || 0;
+  }
+
+  try {
+    const docs = await getDocs(collection(db, "users", uid));
+
+    if (docs.empty) {
+      return 0;
+    }
+
+    return docs.docs[0].data().totalSolved;
+  } catch (error) {
+    console.error(error);
+  }
+
+  return 0;
+};*/
+
+const fetchRandomWord = async (
+  category: string,
+  length: number,
+): Promise<string> => {
+  const wordRef = collection(db, "words");
+  const solvedWords = await getSolvedWords();
+
+  let wordQuery;
+
+  if (solvedWords.length === 0) {
+    wordQuery = query(
+      wordRef,
+      where("category", "==", category),
+      where("length", "==", length),
+      orderBy("word"),
+      limit(1),
+    );
+  } else {
+    wordQuery = query(
+      wordRef,
+      where("category", "==", category),
+      where("length", "==", length),
+      where("word", "not-in", solvedWords),
+      orderBy("word"),
+      limit(1),
+    );
+  }
+
+  const wordsSnapshot = await getDocs(wordQuery);
+
+  if (wordsSnapshot.empty) {
+    throw new Error("No words available in the database.");
+  }
+
+  return wordsSnapshot.docs[0].data().word;
+};
+
 export const getRandomWord = async ({
   length,
   category,
 }: RandomWordProps): Promise<string> => {
-  const wordRef = collection(db, "words");
-  const wordQuery = query(
-    wordRef,
-    where("category", "==", category),
-    where("length", "==", length),
-  );
-  const wordSnapshot = await getDocs(wordQuery);
-  const words: string[] = [];
+  console.log("Fetching a random word");
 
-  wordSnapshot.forEach((doc) => {
-    words.push(doc.data().word);
-  });
+  const randomWord = await fetchRandomWord(category, length);
 
-  return words[Math.floor(Math.random() * words.length)];
+  console.log("Random word fetched:", randomWord);
+
+  return randomWord;
 };
 
 export const usernameExists = async (username: string): Promise<boolean> => {
