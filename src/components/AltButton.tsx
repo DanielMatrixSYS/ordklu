@@ -1,7 +1,7 @@
 import React from "react";
 import { FaSpinner } from "react-icons/fa";
 
-interface ButtonProps {
+interface AltButtonProps {
   value: string;
   type?: "button" | "reset" | "submit" | undefined;
   disabled?: boolean;
@@ -9,7 +9,7 @@ interface ButtonProps {
   onClick?: () => void;
 }
 
-const Button: React.FC<ButtonProps> = ({
+const AltButton: React.FC<AltButtonProps> = ({
   value,
   type = "button",
   disabled = false,
@@ -19,9 +19,9 @@ const Button: React.FC<ButtonProps> = ({
   return (
     <button
       type={type}
-      disabled={disabled || loading}
-      className="flex w-full items-center justify-center p-2 bg-blue-700 text-sm font-light text-white rounded-full active:bg-blue-800"
+      className="p-2 mt-8 border border-blue-700 text-sm w-full text-blue-700 active:bg-blue-300 rounded-full"
       onClick={onClick}
+      disabled={disabled || loading}
     >
       {loading ? (
         <div className="flex items-center justify-center space-x-2">
@@ -36,4 +36,4 @@ const Button: React.FC<ButtonProps> = ({
   );
 };
 
-export default Button;
+export default AltButton;

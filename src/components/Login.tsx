@@ -1,8 +1,12 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
-
 import { PageName } from "../App.tsx";
-import { FaSpinner } from "react-icons/fa";
+import {
+  firebaseAuthErrorDetails,
+  FirebaseAuthErrorCode,
+} from "./Auth/AuthErrorHandling.tsx";
+import Button from "./Button.tsx";
+import AltButton from "./AltButton.tsx";
 
 const Login: React.FC<{ setPage: (page: PageName) => void }> = ({
   setPage,
@@ -10,6 +14,19 @@ const Login: React.FC<{ setPage: (page: PageName) => void }> = ({
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+
+  useEffect(() => {
+    if (error) {
+      const timeoutId = setTimeout(() => {
+        setError("");
+      }, 5000);
+
+      return () => {
+        clearTimeout(timeoutId);
+      };
+    }
+  }, [error]);
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -26,9 +43,13 @@ const Login: React.FC<{ setPage: (page: PageName) => void }> = ({
         setPage("main");
       })
       .catch((error) => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        console.error("Error logging in: ", errorCode, errorMessage);
+        const errorCode = error.code as FirebaseAuthErrorCode;
+
+        if (errorCode in firebaseAuthErrorDetails) {
+          const details = firebaseAuthErrorDetails[errorCode];
+
+          setError(details.description);
+        }
       });
 
     setLoading(false);
@@ -65,34 +86,25 @@ const Login: React.FC<{ setPage: (page: PageName) => void }> = ({
             disabled={loading}
           />
 
-          <button
-            type="submit"
-            className="p-2 bg-blue-700 text-sm font-light text-white rounded-full active:bg-blue-800"
-            disabled={loading}
-          >
-            {loading ? (
-              <div className="flex items-center justify-center space-x-2">
-                <span className="text-neutral-100">Logger inn</span>
+          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
-                <FaSpinner className="animate-spin text-neutral-100" />
-              </div>
-            ) : (
-              "Logg inn"
-            )}
-          </button>
+          <Button
+            value="Logg inn"
+            type="submit"
+            disabled={loading}
+            loading={loading}
+          />
         </form>
 
         <p className="text-sm/8 text-neutral-700 mt-1 hover:cursor-pointer hover:text-blue-700 hover:underline">
           Glemt passordet?
         </p>
 
-        <button
-          className="p-2 mt-8 border border-blue-700 text-sm w-full text-blue-700 active:bg-blue-300 rounded-full"
+        <AltButton
+          value="Registrer deg"
           onClick={() => setPage("register")}
           disabled={loading}
-        >
-          Opprett ny konto
-        </button>
+        />
       </div>
     </div>
   );

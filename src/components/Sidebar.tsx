@@ -1,7 +1,7 @@
 import { GoSidebarExpand } from "react-icons/go";
 import React, { useContext, useMemo } from "react";
 import { PageName } from "../App.tsx";
-import Button from "./Button";
+import SidebarButton from "./SidebarButton.tsx";
 import { AuthContext, AuthContextProps } from "./Auth/AuthContext.tsx";
 import { getAuth, signOut } from "firebase/auth";
 
@@ -87,7 +87,7 @@ const Sidebar: React.FC<{
       <hr className="border-neutral-400" />
       <div className="flex flex-col space-y-2 p-2">
         {sidebarButtons.map((button, index) => (
-          <Button
+          <SidebarButton
             key={index}
             value={button.name}
             onClick={() => handleButtonClick(button.action)}

@@ -24,6 +24,10 @@ import {
   doc,
   getDoc,
 } from "firebase/firestore";
+import {
+  FirebaseAuthErrorCode,
+  firebaseAuthErrorDetails,
+} from "../components/Auth/AuthErrorHandling.tsx";
 
 type RandomWordProps = {
   length: number;
@@ -196,7 +200,7 @@ export const registerUser = async ({
   username,
   email,
   password,
-}: UserProps): Promise<boolean> => {
+}: UserProps): Promise<[boolean, string]> => {
   /*if (await usernameExists(username)) {
     console.log("Username already exists");
 
@@ -205,35 +209,35 @@ export const registerUser = async ({
 
   console.log("Creating user");
 
-  try {
-    const userCredential: UserCredential = await createUserWithEmailAndPassword(
-      auth,
-      email,
-      password,
-    );
+  let errorDescription: string = "Uventet feil. Vennligst prøv igjen senere.";
 
-    console.log("User created");
+  await createUserWithEmailAndPassword(auth, email, password)
+    .then((userCredential: UserCredential) => {
+      updateProfile(userCredential.user, {
+        displayName: username,
+      });
 
-    await updateProfile(userCredential.user, {
-      displayName: username,
+      console.log("Profile updated");
+
+      // Create a user document in the database
+      const userRef = doc(db, "users", userCredential.user.uid);
+      setDoc(userRef, {
+        username,
+        email,
+        uid: userCredential.user.uid,
+      });
+
+      return [true, ""];
+    })
+    .catch((error) => {
+      const errorCode = error.code as FirebaseAuthErrorCode;
+
+      if (errorCode in firebaseAuthErrorDetails) {
+        const details = firebaseAuthErrorDetails[errorCode];
+
+        errorDescription = details.description;
+      }
     });
 
-    console.log("Profile updated");
-
-    // Create a user document in the database
-    const userRef = doc(db, "users", userCredential.user.uid);
-    await setDoc(userRef, {
-      username,
-      email,
-      uid: userCredential.user.uid,
-    });
-
-    console.log("User document created");
-
-    return true;
-  } catch (error) {
-    console.error(error);
-  }
-
-  return false;
+  return [false, errorDescription];
 };

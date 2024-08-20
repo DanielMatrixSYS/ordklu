@@ -6,6 +6,7 @@ import "../index.css";
 import { FaBackspace, FaSpinner } from "react-icons/fa";
 import { IoMdReturnLeft } from "react-icons/io";
 import { addSolvedWord } from "../util/FirebaseFunctions";
+import Button from "./Button.tsx";
 
 const alphabetRowOne = "QWERTYUIOPÅ";
 const alphabetRowTwo = "ASDFGHJKLÆØ";
@@ -174,12 +175,13 @@ const Main = (): ReactElement => {
         {!won &&
           currentRow - 1 < rows - 1 &&
           attempts[currentRow].join("").length === columns && (
-            <button
-              className="flex items-center rounded-full justify-center h-10 border w-1/2 md:w-64 bg-pink-200 active:bg-pink-300"
-              onClick={handleEnterClick}
-            >
-              Sjekk
-            </button>
+            <div className="flex flex-row items-center justify-center w-36">
+              <Button
+                value="Sjekk"
+                disabled={loading}
+                onClick={handleEnterClick}
+              />
+            </div>
           )}
       </div>
 
@@ -235,10 +237,12 @@ const Main = (): ReactElement => {
           </>
         )}
 
-        <div className="flex flex-col items-center justify-center w-full space-y-2">
+        <div className="flex flex-col items-center justify-center w-full space-y-2 px-2">
           <button
-            className={`flex items-center rounded-full justify-center h-10 border w-1/2 text-sm text-neutral-800/90 ${won || currentRow - 1 === rows - 1 ? "bg-pink-300/80 active:bg-pink-400/80" : "bg-transparent"}`}
+            className={`p-2 border border-blue-700 mt-8 text-sm w-full rounded-full ${won || currentRow - 1 === rows - 1 ? "bg-blue-700 text-white" : "border border-blue-700 text-blue-700"}`}
             onClick={async (e: React.MouseEvent<HTMLButtonElement>) => {
+              // This is a special button, that is why we don't want to use the default buttons.
+
               // Remove focus from the button.
               // So the user can use the keyboard to play the game.
               if (e.currentTarget) {

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { PageName } from "../App.tsx";
 import { registerUser } from "../util/FirebaseFunctions.tsx";
 import { FaSpinner } from "react-icons/fa";
@@ -10,24 +10,64 @@ const Register: React.FC<{ setPage: (page: PageName) => void }> = ({
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
 
-  const shouldContinue = (): boolean => {
-    if (!username || !email || !password) return false;
-    if (username.length < 3) return false;
-    if (password.length < 6) return false;
+  const shouldContinue = (): [string, boolean] => {
+    if (!username) {
+      return ["Brukernavn kan ikke være tomt", false];
+    }
 
-    return !loading;
+    if (!email) {
+      return ["E-post kan ikke være tomt", false];
+    }
+
+    if (!password) {
+      return ["Passord kan ikke være tomt", false];
+    }
+
+    if (password.length < 6) {
+      return ["Passordet må være minst 6 tegn langt", false];
+    }
+
+    if (username.length < 3) {
+      return ["Brukernavnet må være minst 3 tegn langt", false];
+    }
+
+    if (!email.includes("@")) {
+      return ["Ugyldig e-postadresse", false];
+    }
+
+    return ["", true];
   };
+
+  useEffect(() => {
+    if (error) {
+      const timeoutId = setTimeout(() => {
+        setError("");
+      }, 5000);
+
+      return () => {
+        clearTimeout(timeoutId);
+      };
+    }
+  }, [error]);
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     console.log("Registering user: ", username, shouldContinue());
 
-    if (!shouldContinue()) return;
+    const [reason, continuing] = shouldContinue();
+
+    if (!continuing) {
+      setError(reason);
+
+      return;
+    }
+
     setLoading(true);
 
-    const result = await registerUser({ username, email, password });
+    const [result, error] = await registerUser({ username, email, password });
 
     if (result) {
       setLoading(false);
@@ -36,6 +76,7 @@ const Register: React.FC<{ setPage: (page: PageName) => void }> = ({
       return;
     }
 
+    setError(error);
     setLoading(false);
   };
 
@@ -79,6 +120,8 @@ const Register: React.FC<{ setPage: (page: PageName) => void }> = ({
             className="p-2 border border-neutral-400 text-sm focus:outline-none rounded-md"
             onChange={(e) => setPassword(e.target.value)}
           />
+
+          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
           <button
             disabled={loading}
