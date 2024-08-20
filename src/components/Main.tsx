@@ -35,6 +35,7 @@ const Main = (): ReactElement => {
         setCurrentColumn((prev): number => prev + 1);
       }
     },
+
     [attempts, currentRow, currentColumn, columns],
   );
 
@@ -100,6 +101,7 @@ const Main = (): ReactElement => {
 
   const shouldDisplayKeyboard = (): boolean => {
     if (won) return false;
+
     return currentRow - 1 !== rows - 1;
   };
 
