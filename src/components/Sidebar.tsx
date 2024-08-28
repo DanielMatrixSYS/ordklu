@@ -69,7 +69,7 @@ const Sidebar: React.FC<{
 
   return (
     <div
-      className={`fixed w-2/3 h-full z-50 transform transition-transform duration-300 ease-in-out ${
+      className={`fixed w-2/3 sm:w-1/4 h-full z-50 transform transition-transform duration-300 ease-in-out ${
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       } backdrop-blur-lg bg-black/20 border border-white/70 shadow-2xl`}
     >

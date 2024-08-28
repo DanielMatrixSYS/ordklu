@@ -1,3 +1,5 @@
+import axios from "axios";
+
 export const formatTime = (seconds: number): string => {
   if (seconds < 60) {
     return `${seconds} sekund${seconds === 1 ? "" : "er"}`;
@@ -17,4 +19,19 @@ export const formatTime = (seconds: number): string => {
 
 export const shuffleArray = (array: string[]): string[] => {
   return array.sort(() => Math.random() - 0.5);
+};
+
+export const fetchRandomWord = async (): Promise<string> => {
+  try {
+    const response = await axios.get("http://localhost:3001/random-word");
+
+    if (response.status === 200) {
+      return response.data.word;
+    }
+
+    return "";
+  } catch (error) {
+    console.error(error);
+    return "";
+  }
 };

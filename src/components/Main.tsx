@@ -7,6 +7,7 @@ import { FaBackspace, FaSpinner } from "react-icons/fa";
 import { IoMdReturnLeft } from "react-icons/io";
 import { addSolvedWord } from "../util/FirebaseFunctions";
 import Button from "./Button.tsx";
+import { fetchRandomWord } from "../util/Other.tsx";
 
 const alphabetRowOne = "QWERTYUIOPÅ";
 const alphabetRowTwo = "ASDFGHJKLÆØ";
@@ -117,12 +118,18 @@ const Main = (): ReactElement => {
     const getWord = async (): Promise<string> => {
       setLoading(true);
 
-      return await getRandomWord({ length: 5, category: "all" });
+      try {
+        const word = await fetchRandomWord();
+
+        setAnswer(word.toUpperCase());
+        return word;
+      } catch (error) {
+        console.error(error);
+        return "";
+      }
     };
 
-    getWord().then((word): void => {
-      setAnswer(word.toUpperCase());
-    });
+    getWord().then((word: string) => console.log("Word fetched:", word));
 
     setLoading(false);
   }, []);
@@ -241,7 +248,7 @@ const Main = (): ReactElement => {
 
         <div className="flex flex-col items-center justify-center w-full space-y-2 px-2">
           <button
-            className={`p-2 border border-blue-700 mt-8 text-sm w-full rounded-full ${won || currentRow - 1 === rows - 1 ? "bg-blue-700 text-white" : "border border-blue-700 text-blue-700"}`}
+            className={`p-2 border border-blue-700 mt-8 text-sm w-full sm:w-64 rounded-full ${won || currentRow - 1 === rows - 1 ? "bg-blue-700 text-white" : "border border-blue-700 text-blue-700"}`}
             onClick={async (e: React.MouseEvent<HTMLButtonElement>) => {
               // This is a special button, that is why we don't want to use the default buttons.
 
