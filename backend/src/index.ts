@@ -1,3 +1,5 @@
+import * as fs from "fs";
+import * as path from "path";
 import "reflect-metadata";
 import express from "express";
 import cors from "cors";
@@ -11,13 +13,19 @@ app.use(cors());
 app.use(express.json());
 
 const dataSource = new DataSource({
-  type: "",
+  type: "postgres",
   host: "",
   port: 5432,
   username: "",
   password: "",
   database: "",
   synchronize: true,
+  ssl: {
+    rejectUnauthorized: true,
+    ca: fs
+      .readFileSync(path.resolve(__dirname, "certs/eu-north-1-bundle.pem"))
+      .toString(),
+  },
   entities: [Words],
 });
 
