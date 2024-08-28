@@ -1,30 +1,28 @@
 import * as fs from "fs";
-import * as path from "path";
+import * as dotenv from "dotenv";
 import "reflect-metadata";
 import express from "express";
 import cors from "cors";
 import { DataSource } from "typeorm";
 import { Words } from "./entity/Words";
 
-const app = express();
-const port = 3001;
+dotenv.config();
 
+const app = express();
 app.use(cors());
 app.use(express.json());
 
 const dataSource = new DataSource({
   type: "postgres",
-  host: "",
-  port: 5432,
-  username: "",
-  password: "",
-  database: "",
+  host: process.env.DATABASE_HOST ?? "localhost",
+  port: parseInt(process.env.DATABASE_PORT ?? "5432", 10),
+  username: process.env.DATABASE_USERNAME,
+  password: process.env.DATABASE_PASSWORD,
+  database: process.env.DATABASE_DB,
   synchronize: true,
   ssl: {
     rejectUnauthorized: true,
-    ca: fs
-      .readFileSync(path.resolve(__dirname, "certs/eu-north-1-bundle.pem"))
-      .toString(),
+    ca: fs.readFileSync(process.env.DATABASE_CERT_PATH ?? "").toString(),
   },
   entities: [Words],
 });
@@ -52,8 +50,10 @@ dataSource
       }
     });
 
-    app.listen(port, () => {
-      console.log(`Server started. Listening on port ${port}`);
+    app.listen(process.env.SERVER_PORT, () => {
+      console.log(
+        `Good morning cocksuckermotherfucker. Port: ${process.env.SERVER_PORT}`,
+      );
     });
   })
   .catch((error) => {
