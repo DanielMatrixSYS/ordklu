@@ -6,8 +6,7 @@ import cors from "cors";
 import { DataSource } from "typeorm";
 import { Words } from "./entity/Words";
 import { createWordsRouter } from "./routes/WordsRoute";
-import https from "https";
-import http from "node:http";
+import http from "http";
 
 dotenv.config();
 
@@ -31,24 +30,11 @@ const dataSource = new DataSource({
 });
 
 dataSource.initialize().then(() => {
-  app.use("/api/v1", createWordsRouter(dataSource));
+  app.use("/v1", createWordsRouter(dataSource));
 
-  const httpsOptions = {
-    key: fs.readFileSync("/etc/letsencrypt/live/api.ordklu.no/privkey.pem"),
-    cert: fs.readFileSync("/etc/letsencrypt/live/api.ordklu.no/fullchain.pem"),
-  };
-
-  https.createServer(httpsOptions, app).listen(443, () => {
-    console.log("HTTPS Server running on port 443");
+  // HTTP
+  // Nginx will handle HTTPS
+  http.createServer(app).listen(3001, () => {
+    console.log("Server running on port 3001 (nginx proxy)");
   });
-
-  // Redirect
-  http
-    .createServer((req, res) => {
-      res.writeHead(301, { Location: `https://${req.headers.host}${req.url}` });
-      res.end();
-    })
-    .listen(80, () => {
-      console.log("HTTP Server running on port 80 and redirecting to HTTPS");
-    });
 });
