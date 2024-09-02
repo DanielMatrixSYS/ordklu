@@ -13,10 +13,10 @@ dotenv.config();
 const app = express();
 app.use(
   cors({
-    origin: ["*"],
+    origin: "*",
     methods: ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
     allowedHeaders: ["Origin", "Content-Type", "Accept", "Authorization"],
-    credentials: true,
+    credentials: false,
   }),
 );
 
