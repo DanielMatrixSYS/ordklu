@@ -14,7 +14,7 @@ const app = express();
 app.use(
   cors({
     origin: ["https://ordklu.no", "https://api.ordklu.no"],
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   }),
 );
