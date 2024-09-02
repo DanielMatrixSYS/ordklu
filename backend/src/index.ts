@@ -11,7 +11,14 @@ import http from "http";
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: ["https://ordklu.no", "https://api.ordklu.no"],
+    methods: ["GET", "POST"],
+    credentials: true,
+  }),
+);
+
 app.use(express.json());
 
 const dataSource = new DataSource({
