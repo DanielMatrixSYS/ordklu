@@ -6,6 +6,7 @@ import cors from "cors";
 import { DataSource } from "typeorm";
 import { Words } from "./entity/Words";
 import { createWordsRouter } from "./routes/WordsRoute";
+import https from "https";
 
 dotenv.config();
 
@@ -15,7 +16,7 @@ app.use(express.json());
 
 const dataSource = new DataSource({
   type: "postgres",
-  host: `https://${process.env.DATABASE_HOST ?? "localhost"}`,
+  host: process.env.DATABASE_HOST ?? "localhost",
   port: parseInt(process.env.DATABASE_PORT ?? "5432", 10),
   username: process.env.DATABASE_USERNAME,
   password: process.env.DATABASE_PASSWORD,
@@ -29,9 +30,14 @@ const dataSource = new DataSource({
 });
 
 dataSource.initialize().then(() => {
-  app.use("/api/v1", createWordsRouter(dataSource));
+  app.use("/v1", createWordsRouter(dataSource));
 
-  app.listen(process.env.PORT ?? 3000, () => {
-    console.log(`Server running on port ${process.env.PORT ?? 3000}`);
+  const httpsOptions = {
+    key: fs.readFileSync("/etc/letsencrypt/live/api.ordklu.no/privkey.pem"),
+    cert: fs.readFileSync("/etc/letsencrypt/live/api.ordklu.no/fullchain.pem"),
+  };
+
+  https.createServer(httpsOptions, app).listen(process.env.PORT ?? 443, () => {
+    console.log(`HTTPS mothafucka running on port ${process.env.PORT ?? 443}`);
   });
 });
