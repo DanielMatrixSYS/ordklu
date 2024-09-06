@@ -72,12 +72,43 @@ export function createWordsRouter(dataSource: DataSource) {
         return res.status(400).json({ error: "No words provided" });
       }
 
-      console.log("allowed to upload:", req.user?.uid);
-      console.log(words);
+      try {
+        const wordRepo = dataSource.getRepository(Words);
 
-      return res
-        .status(200)
-        .json({ message: `words from server upload words ${words}` });
+        for (const wordData of words) {
+          const { word, length, category, description, language, difficulty } =
+            wordData;
+
+          // Validate that all required fields are present
+          if (
+            !word ||
+            !length ||
+            !category ||
+            !description ||
+            !language ||
+            !difficulty
+          ) {
+            return res
+              .status(400)
+              .json({ error: "Missing required fields in word data" });
+          }
+
+          await wordRepo.save({
+            word,
+            length,
+            category,
+            description,
+            language,
+            difficulty,
+          });
+        }
+
+        return res
+          .status(200)
+          .json({ message: `words from server upload words ${words}` });
+      } catch (error) {
+        return res.status(500).json({ error: "Error uploading words" });
+      }
     },
   );
 
