@@ -74,7 +74,7 @@ const dataSource = new DataSource({
   username: process.env.DATABASE_USERNAME,
   password: process.env.DATABASE_PASSWORD,
   database: process.env.DATABASE_DB,
-  synchronize: true,
+  synchronize: false,
   ssl: {
     rejectUnauthorized: true,
     ca: fs.readFileSync(process.env.DATABASE_CERT_PATH ?? "").toString(),
