@@ -17,6 +17,7 @@ export async function authenticateFirebaseToken(
     return res.status(401).json({ error: "Unauthorized" });
   }
 
+  // Basically just verifies that the token is valid, not an admin check.
   try {
     req.user = await firebaseAdmin.auth().verifyIdToken(token);
     next();

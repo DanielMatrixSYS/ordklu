@@ -2,6 +2,7 @@ import { Router } from "express";
 import { DataSource } from "typeorm";
 import { Words } from "../entity/Words";
 import { authenticateFirebaseToken, FirebaseRequest } from "../middleware/auth";
+import { firebaseAdmin } from "../index";
 
 const router = Router();
 
@@ -45,13 +46,33 @@ export function createWordsRouter(dataSource: DataSource) {
     async (req: FirebaseRequest, res) => {
       const { words } = req.body;
 
-      console.log("nigga");
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      try {
+        const userDoc = await firebaseAdmin
+          .firestore()
+          .collection("users")
+          .doc(req.user.uid)
+          .get();
+
+        if (!userDoc.exists) {
+          return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        if (!userDoc.data()?.admin) {
+          return res.status(403).json({ error: "Forbidden" });
+        }
+      } catch (error) {
+        return res.status(500).json({ error: "Error uploading words" });
+      }
 
       if (!words) {
         return res.status(400).json({ error: "No words provided" });
       }
 
-      console.log(req.user);
+      console.log("allowed to upload:", req.user?.uid);
       console.log(words);
 
       return res
