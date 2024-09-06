@@ -5,8 +5,11 @@ import express from "express";
 import cors from "cors";
 import { DataSource } from "typeorm";
 import { Words } from "./entity/Words";
+//import { Users } from "./entity/Users";
 import { createWordsRouter } from "./routes/WordsRoute";
 import http from "http";
+import crypto from "crypto";
+import rateLimit from "express-rate-limit";
 
 dotenv.config();
 
@@ -19,6 +22,18 @@ app.use(
     credentials: false,
   }),
 );
+
+app.use((req, res, next) => {
+  const nonce = crypto.randomBytes(16).toString("base64");
+
+  res.setHeader(
+    "Content-Security-Policy",
+    `default-src 'self'; script-src 'self' 'nonce-${nonce}' https://apis.google.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://ordklu.no https://api.ordklu.no; frame-src 'self' https://ordklu.firebaseapp.com https://www.google.com;`,
+  );
+
+  res.locals.nonce = nonce;
+  next();
+});
 
 app.use(express.json());
 
@@ -38,6 +53,13 @@ const dataSource = new DataSource({
 });
 
 dataSource.initialize().then(() => {
+  const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 100,
+    message: "Too many requests from this IP, please try again later",
+  });
+
+  app.use("/v1", apiLimiter);
   app.use("/v1", createWordsRouter(dataSource));
 
   // HTTP
