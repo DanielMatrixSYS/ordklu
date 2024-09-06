@@ -50,25 +50,6 @@ app.use(
 
 app.use(express.json());
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
-export async function authenticateFirebaseToken(req, res, next) {
-  const token = req.headers.authorization?.split(" ")[1];
-
-  console.log("gotte nto here");
-
-  if (!token) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-
-  try {
-    req.user = await firebaseAdmin.auth().verifyIdToken(token);
-    next();
-  } catch (error) {
-    return res.status(403).json({ error: "Unauthorized" });
-  }
-}
-
 const dataSource = new DataSource({
   type: "postgres",
   host: process.env.DATABASE_HOST ?? "localhost",
