@@ -24,17 +24,16 @@ app.use(
 );
 
 app.use((req, res, next) => {
-  const nonce = crypto.randomBytes(16).toString("base64");
+  const nonce = crypto
+    .randomBytes(16)
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
 
   res.setHeader(
     "Content-Security-Policy",
-    `default-src 'self'; 
-    script-src 'self' 'nonce-${nonce}' https://apis.google.com; 
-    style-src 'self' https://fonts.googleapis.com; 
-    font-src 'self' https://fonts.gstatic.com; 
-    img-src 'self' data: https:; 
-    connect-src 'self' https://ordklu.no https://api.ordklu.no https://identitytoolkit.googleapis.com https://www.googleapis.com; 
-    frame-src 'self' https://ordklu.firebaseapp.com https://www.google.com;`,
+    `default-src 'self'; script-src 'self' 'nonce-${nonce}' https://apis.google.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://ordklu.no https://api.ordklu.no https://identitytoolkit.googleapis.com https://www.googleapis.com; frame-src 'self' https://ordklu.firebaseapp.com https://www.google.com;`,
   );
 
   res.locals.nonce = nonce;
