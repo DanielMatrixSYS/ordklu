@@ -1,13 +1,12 @@
 import LetterBox from "./LetterBox";
 import React, { useEffect, useState, useCallback, ReactElement } from "react";
 import KeyboardButton from "./KeyboardButton";
-import { getRandomWord } from "../util/FirebaseFunctions";
 import "../index.css";
 import { FaBackspace, FaSpinner } from "react-icons/fa";
 import { IoMdReturnLeft } from "react-icons/io";
 import { addSolvedWord } from "../util/FirebaseFunctions";
 import Button from "./Button.tsx";
-import { fetchRandomWord } from "../util/Other.tsx";
+import { fetchRandomWord } from "../util/PostgresqlFunctions.tsx";
 
 const alphabetRowOne = "QWERTYUIOPÅ";
 const alphabetRowTwo = "ASDFGHJKLÆØ";
@@ -129,7 +128,7 @@ const Main = (): ReactElement => {
       }
     };
 
-    getWord().then((word: string) => console.log("Word fetched:", word));
+    getWord();
 
     setLoading(false);
   }, []);
@@ -267,12 +266,10 @@ const Main = (): ReactElement => {
               setCurrentColumn(0);
               setWon(false);
 
-              await getRandomWord({ length: 5, category: "all" }).then(
-                (word: string) => {
-                  setAnswer(word.toUpperCase());
-                  setLoading(false);
-                },
-              );
+              const word = await fetchRandomWord();
+
+              setAnswer(word.toUpperCase());
+              setLoading(false);
             }}
           >
             Gi meg nytt ord

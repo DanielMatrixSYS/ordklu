@@ -1,13 +1,10 @@
-import React, { useContext, useState } from "react";
+import { useContext, useState } from "react";
 import { GoSidebarCollapse } from "react-icons/go";
 import Sidebar from "./Sidebar.tsx";
-import { PageName } from "../App.tsx";
 import { AuthContext, AuthContextProps } from "./Auth/AuthContext.tsx";
 import { FaSpinner } from "react-icons/fa";
 
-const Header: React.FC<{ setPage: (page: PageName) => void }> = ({
-  setPage,
-}) => {
+const Header = () => {
   //const [timeUsed, setTimeUsed] = useState<number>(0);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const { user, loading } = useContext(AuthContext) as AuthContextProps;
@@ -28,11 +25,7 @@ const Header: React.FC<{ setPage: (page: PageName) => void }> = ({
 
   return (
     <div className="w-full">
-      <Sidebar
-        sidebarOpen={sidebarOpen}
-        setSidebarOpen={setSidebarOpen}
-        setPage={setPage}
-      />
+      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
       <div className="w-full px-2 h-[45.5px] border-b border-b-neutral-300 bg-pink-50">
         <div className="flex w-full h-full items-center justify-between">

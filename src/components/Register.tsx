@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { PageName } from "../App.tsx";
 import { registerUser } from "../util/FirebaseFunctions.tsx";
 import { FaSpinner } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
-const Register: React.FC<{ setPage: (page: PageName) => void }> = ({
-  setPage,
-}) => {
+const Register = () => {
   const [username, setUsername] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+
+  const navigate = useNavigate();
 
   const shouldContinue = (): [string, boolean] => {
     if (!username) {
@@ -71,7 +71,6 @@ const Register: React.FC<{ setPage: (page: PageName) => void }> = ({
 
     if (result) {
       setLoading(false);
-      setPage("main");
 
       return;
     }
@@ -143,9 +142,7 @@ const Register: React.FC<{ setPage: (page: PageName) => void }> = ({
 
         <p
           className="text-sm/8 text-neutral-700 mt-1 hover:cursor-pointer hover:text-blue-700 hover:underline"
-          onClick={() => {
-            setPage("login");
-          }}
+          onClick={() => navigate("/login")}
         >
           Jeg har allerede en konto
         </p>

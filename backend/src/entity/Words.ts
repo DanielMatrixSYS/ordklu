@@ -15,5 +15,11 @@ export class Words {
   category!: string;
 
   @Column()
+  description!: string;
+
+  @Column()
+  language!: string;
+
+  @Column()
   difficulty!: number;
 }

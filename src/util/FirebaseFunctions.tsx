@@ -17,8 +17,6 @@ import {
   collection,
   query,
   where,
-  orderBy,
-  limit,
   getDocs,
   setDoc,
   doc,
@@ -28,11 +26,6 @@ import {
   FirebaseAuthErrorCode,
   firebaseAuthErrorDetails,
 } from "../components/Auth/AuthErrorHandling.tsx";
-
-type RandomWordProps = {
-  length: number;
-  category: string;
-};
 
 export const addSolvedWord = async (word: string): Promise<void> => {
   const auth = getAuth();
@@ -79,114 +72,11 @@ export const addSolvedWord = async (word: string): Promise<void> => {
   return;
 };
 
-const getSolvedWords = async (): Promise<string[]> => {
-  const auth = getAuth();
-  const uid = auth.currentUser?.uid;
-
-  if (!uid) {
-    return JSON.parse(
-      sessionStorage.getItem("solvedWords") || "[]",
-    ) as string[];
-  }
-
-  try {
-    const docRef = doc(db, "users", uid);
-    const docSnap = await getDoc(docRef);
-
-    if (!docSnap.exists()) {
-      return [];
-    }
-
-    return docSnap.data().solved;
-  } catch (error) {
-    console.error(error);
-  }
-
-  return [];
-};
-
-/*const getTotalSolvedWords = async (): Promise<number> => {
-  const auth = getAuth();
-  const uid = auth.currentUser?.uid;
-
-  if (!uid) {
-    const words = JSON.parse(sessionStorage.getItem("solvedWords") || "[]");
-    return words.length || 0;
-  }
-
-  try {
-    const docs = await getDocs(collection(db, "users", uid));
-
-    if (docs.empty) {
-      return 0;
-    }
-
-    return docs.docs[0].data().totalSolved;
-  } catch (error) {
-    console.error(error);
-  }
-
-  return 0;
-};*/
-
-const fetchRandomWord = async (
-  category: string,
-  length: number,
-): Promise<string> => {
-  const wordRef = collection(db, "words");
-  const solvedWords = await getSolvedWords();
-
-  let wordQuery;
-
-  if (solvedWords.length === 0) {
-    wordQuery = query(
-      wordRef,
-      where("category", "==", category),
-      where("length", "==", length),
-      orderBy("word"),
-      limit(1),
-    );
-  } else {
-    wordQuery = query(
-      wordRef,
-      where("category", "==", category),
-      where("length", "==", length),
-      where("word", "not-in", solvedWords),
-      orderBy("word"),
-      limit(1),
-    );
-  }
-
-  const wordsSnapshot = await getDocs(wordQuery);
-
-  if (wordsSnapshot.empty) {
-    throw new Error("No words available in the database.");
-  }
-
-  return wordsSnapshot.docs[0].data().word;
-};
-
-export const getRandomWord = async ({
-  length,
-  category,
-}: RandomWordProps): Promise<string> => {
-  console.log("Fetching a random word");
-
-  const randomWord = await fetchRandomWord(category, length);
-
-  console.log("Random word fetched:", randomWord);
-
-  return randomWord;
-};
-
 export const usernameExists = async (username: string): Promise<boolean> => {
   try {
-    console.log("Checking if username exists");
     const userRef = collection(db, "users");
     const userQuery = query(userRef, where("username", "==", username));
     const userSnapshot = await getDocs(userQuery);
-
-    console.log("User exists:", !userSnapshot.empty);
 
     return !userSnapshot.empty;
   } catch (error) {

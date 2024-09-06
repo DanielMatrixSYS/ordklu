@@ -1,9 +1,8 @@
-import React from "react";
-import { PageName } from "../App.tsx";
+import { useNavigate } from "react-router-dom";
 
-const MainMenu: React.FC<{ setPage: (page: PageName) => void }> = ({
-  setPage,
-}) => {
+const MainMenu = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="flex bg-gradient-to-t from-pink-100 to-pink-50 flex-col items-center w-full h-full">
       <div className="flex flex-col mt-4">
@@ -32,7 +31,7 @@ const MainMenu: React.FC<{ setPage: (page: PageName) => void }> = ({
       <div className="flex flex-col items-center mt-28 w-full">
         <button
           className="px-8 w-2/3 sm:w-96 py-2 bg-blue-500 text-white rounded-full hover:scale-105 transition-all duration-300"
-          onClick={() => setPage("game")}
+          onClick={() => navigate("/game")}
         >
           Gjett nå!
         </button>

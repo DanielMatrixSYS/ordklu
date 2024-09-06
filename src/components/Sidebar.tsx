@@ -1,48 +1,64 @@
 import { GoSidebarExpand } from "react-icons/go";
 import React, { useContext, useMemo } from "react";
-import { PageName } from "../App.tsx";
 import SidebarButton from "./SidebarButton.tsx";
 import { AuthContext, AuthContextProps } from "./Auth/AuthContext.tsx";
 import { getAuth, signOut } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
 
-type ActionType = "Lukk" | "Logout";
-type PageType = PageName;
-
-type SidebarAction = ActionType | PageType;
+type ActionType =
+  | "Lukk"
+  | "Logout"
+  | "/"
+  | "/game"
+  | "/profile"
+  | "/login"
+  | "/admin";
 
 interface SidebarButton {
   name: string;
-  action: SidebarAction;
+  action: ActionType;
+  redirect: boolean;
 }
 
 const Sidebar: React.FC<{
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
-  setPage: (page: PageName) => void;
-}> = ({ sidebarOpen, setSidebarOpen, setPage }) => {
-  const { user } = useContext(AuthContext) as AuthContextProps;
+}> = ({ sidebarOpen, setSidebarOpen }) => {
+  const { user, userProfile } = useContext(AuthContext) as AuthContextProps;
+  const navigate = useNavigate();
 
   const sidebarButtons = useMemo<SidebarButton[]>(() => {
     const buttons: SidebarButton[] = [
-      { name: "Hjem", action: "main" },
-      { name: "Spill", action: "game" },
+      { name: "Hjem", action: "/", redirect: true },
+      { name: "Spill", action: "/game", redirect: true },
     ];
 
     if (user) {
       buttons.push(
-        { name: "Profil", action: "profile" },
-        { name: "Logout", action: "Logout" },
+        { name: "Profil", action: "/profile", redirect: true },
+        { name: "Logout", action: "Logout", redirect: false },
       );
+
+      if (userProfile?.admin) {
+        buttons.push({ name: "Admin", action: "/admin", redirect: true });
+      }
     } else {
-      buttons.push({ name: "Logg inn", action: "login" });
+      buttons.push({ name: "Logg inn", action: "/login", redirect: true });
     }
 
-    buttons.push({ name: "Lukk", action: "Lukk" });
+    buttons.push({ name: "Lukk", action: "Lukk", redirect: false });
 
     return buttons;
-  }, [user]);
+  }, [user, userProfile]);
 
-  const handleButtonClick = (action: SidebarAction) => {
+  const handleButtonClick = (action: ActionType) => {
+    if (action.includes("/")) {
+      navigate(action);
+
+      setSidebarOpen(false);
+      return;
+    }
+
     if (action === "Lukk") {
       setSidebarOpen(false);
 
@@ -60,10 +76,10 @@ const Sidebar: React.FC<{
           console.log("Error signing out: ", error);
         });
 
+      setSidebarOpen(false);
       return;
     }
 
-    setPage(action);
     setSidebarOpen(false);
   };
 
@@ -93,6 +109,17 @@ const Sidebar: React.FC<{
             onClick={() => handleButtonClick(button.action)}
           />
         ))}
+      </div>
+
+      <div className="absolute flex flex-col items-center bottom-0">
+        {user && userProfile && (
+          <div className="flex flex-col p-2">
+            <p className="text-neutral-700 text-sm">{user.displayName}</p>
+            <p className="text-neutral-700 text-sm">
+              {user.uid.substring(user.uid.length - 5)}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

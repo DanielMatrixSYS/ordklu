@@ -1,20 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
-import { PageName } from "../App.tsx";
 import {
   firebaseAuthErrorDetails,
   FirebaseAuthErrorCode,
 } from "./Auth/AuthErrorHandling.tsx";
 import Button from "./Button.tsx";
 import AltButton from "./AltButton.tsx";
+import { useNavigate } from "react-router-dom";
 
-const Login: React.FC<{ setPage: (page: PageName) => void }> = ({
-  setPage,
-}) => {
+const Login = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (error) {
@@ -40,7 +40,6 @@ const Login: React.FC<{ setPage: (page: PageName) => void }> = ({
 
         const user = userCredential.user;
         console.log("User logged in: ", user?.displayName || "Anonymous");
-        setPage("main");
       })
       .catch((error) => {
         const errorCode = error.code as FirebaseAuthErrorCode;
@@ -102,8 +101,8 @@ const Login: React.FC<{ setPage: (page: PageName) => void }> = ({
 
         <AltButton
           value="Registrer deg"
-          onClick={() => setPage("register")}
           disabled={loading}
+          onClick={() => navigate("/register")}
         />
       </div>
     </div>

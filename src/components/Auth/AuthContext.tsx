@@ -3,6 +3,7 @@ import { createContext } from "react";
 
 export type UserProfile = {
   solved: number;
+  admin?: boolean;
 };
 
 export type AuthContextProps = {
