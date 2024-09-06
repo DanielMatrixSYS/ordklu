@@ -55,6 +55,8 @@ app.use(express.json());
 export async function authenticateFirebaseToken(req, res, next) {
   const token = req.headers.authorization?.split(" ")[1];
 
+  console.log("gotte nto here");
+
   if (!token) {
     return res.status(401).json({ error: "Unauthorized" });
   }

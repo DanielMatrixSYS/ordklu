@@ -49,6 +49,10 @@ export function createWordsRouter(dataSource: DataSource) {
     // @ts-ignore
     console.log(req.user);
     console.log(words);
+
+    return res
+      .status(200)
+      .json({ message: `words from server upload words ${words}` });
   });
 
   return router;
