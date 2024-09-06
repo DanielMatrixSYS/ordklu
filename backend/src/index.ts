@@ -14,14 +14,6 @@ import rateLimit from "express-rate-limit";
 dotenv.config();
 
 const app = express();
-app.use(
-  cors({
-    origin: "*",
-    methods: ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
-    allowedHeaders: ["Origin", "Content-Type", "Accept", "Authorization"],
-    credentials: false,
-  }),
-);
 
 app.use((req, res, next) => {
   const nonce = crypto
@@ -39,6 +31,15 @@ app.use((req, res, next) => {
   res.locals.nonce = nonce;
   next();
 });
+
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
+    allowedHeaders: ["Origin", "Content-Type", "Accept", "Authorization"],
+    credentials: false,
+  }),
+);
 
 app.use(express.json());
 
