@@ -12,14 +12,12 @@ import http from "http";
 import crypto from "crypto";
 import rateLimit from "express-rate-limit";
 
-const serviceAccount = require(process.env.SERVICEACCOUNT ?? "");
-
 dotenv.config();
 
 export const firebaseAdmin = admin.apps.length
   ? admin.app()
   : admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
+      credential: admin.credential.cert(process.env.SERVICEACCOUNT ?? ""),
     });
 
 const app = express();
@@ -52,8 +50,9 @@ app.use(
 
 app.use(express.json());
 
-// @ts-ignore
-export const authenticateFirebaseToken = async (req, res, next) => {
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+export async function authenticateFirebaseToken(req, res, next) {
   const token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {
@@ -66,7 +65,7 @@ export const authenticateFirebaseToken = async (req, res, next) => {
   } catch (error) {
     return res.status(403).json({ error: "Unauthorized" });
   }
-};
+}
 
 const dataSource = new DataSource({
   type: "postgres",
