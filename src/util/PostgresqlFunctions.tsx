@@ -3,7 +3,7 @@ import axios from "axios";
 export const fetchRandomWord = async () => {
   try {
     const response = await axios.get(
-      `${import.meta.env.VITE_SERVER_URL}/${import.meta.env.VITE_SERVER_APIVERSION}/get-word`,
+      `${import.meta.env.VITE_SERVER_URL}/${import.meta.env.VITE_SERVER_APIVERSION}/get-word?length=5&category=all`,
     );
 
     if (response.status === 200) {

@@ -3,6 +3,7 @@ import AltButton from "./AltButton.tsx";
 import { BsFiletypeJson } from "react-icons/bs";
 import React, { useState } from "react";
 import { FaSpinner } from "react-icons/fa";
+import { auth } from "../util/FirebaseConfig.tsx";
 
 const AdminPage = () => {
   const [loading, setLoading] = useState<boolean>(false);
@@ -47,13 +48,34 @@ const AdminPage = () => {
                       const result = e.target.result;
                       if (!result) return;
 
-                      const json = JSON.parse(result.toString());
+                      try {
+                        const parsedResult = JSON.parse(result as string);
 
-                      console.log(json);
-                      setLoading(false);
-                      setFileName("");
+                        auth.currentUser?.getIdToken().then((token: string) => {
+                          fetch(
+                            `${import.meta.env.VITE_SERVER_URL}/${import.meta.env.VITE_SERVER_APIVERSION}/upload-words`,
+                            {
+                              method: "POST",
+                              headers: {
+                                "Content-Type": "application/json",
+                                Authorization: `Bearer ${token}`,
+                              },
+
+                              body: JSON.stringify({ words: parsedResult }),
+                            },
+                          )
+                            .then((res) => res.json())
+                            .then(() => {
+                              setLoading(false);
+                              setFileName("");
+                            })
+                            .catch((err) => console.log(err));
+                        });
+                      } catch (error) {
+                        alert("Invalid JSON file!");
+                      }
                     } catch (error) {
-                      alert("Invalid JSON file!");
+                      console.log(error);
                     }
                   }
                 };

@@ -22,12 +22,16 @@ export function createWordsRouter(dataSource: DataSource) {
         query = query.andWhere("LENGTH(words.word) = :length", {
           length: parseInt(length as string, 10),
         });
+
+        console.log("length", length);
       }
 
       if (category && category !== "all") {
         query = query.andWhere("words.category = :category", {
           category: category as string,
         });
+
+        console.log("category", category);
       }
 
       const randomWord = await query.getOne();
