@@ -12,15 +12,15 @@ import http from "http";
 import crypto from "crypto";
 import rateLimit from "express-rate-limit";
 
+const serviceAccount = require(process.env.SERVICEACCOUNT ?? "");
+
 dotenv.config();
 
-admin.initializeApp({
-  credential: admin.credential.cert({
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-  }),
-});
+export const firebaseAdmin = admin.apps.length
+  ? admin.app()
+  : admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
 
 const app = express();
 
@@ -61,7 +61,7 @@ export const authenticateFirebaseToken = async (req, res, next) => {
   }
 
   try {
-    req.user = await admin.auth().verifyIdToken(token);
+    req.user = await firebaseAdmin.auth().verifyIdToken(token);
     next();
   } catch (error) {
     return res.status(403).json({ error: "Unauthorized" });
