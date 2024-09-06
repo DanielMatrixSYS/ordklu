@@ -1,17 +1,26 @@
 import * as fs from "fs";
 import * as dotenv from "dotenv";
+import * as admin from "firebase-admin";
 import "reflect-metadata";
 import express from "express";
 import cors from "cors";
 import { DataSource } from "typeorm";
 import { Words } from "./entity/Words";
-//import { Users } from "./entity/Users";
+import { Users } from "./entity/Users";
 import { createWordsRouter } from "./routes/WordsRoute";
 import http from "http";
 import crypto from "crypto";
 import rateLimit from "express-rate-limit";
 
 dotenv.config();
+
+admin.initializeApp({
+  credential: admin.credential.cert({
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+  }),
+});
 
 const app = express();
 
@@ -43,6 +52,22 @@ app.use(
 
 app.use(express.json());
 
+// @ts-ignore
+export const authenticateFirebaseToken = async (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    req.user = await admin.auth().verifyIdToken(token);
+    next();
+  } catch (error) {
+    return res.status(403).json({ error: "Unauthorized" });
+  }
+};
+
 const dataSource = new DataSource({
   type: "postgres",
   host: process.env.DATABASE_HOST ?? "localhost",
@@ -55,7 +80,7 @@ const dataSource = new DataSource({
     rejectUnauthorized: true,
     ca: fs.readFileSync(process.env.DATABASE_CERT_PATH ?? "").toString(),
   },
-  entities: [Words],
+  entities: [Words, Users],
 });
 
 dataSource.initialize().then(() => {

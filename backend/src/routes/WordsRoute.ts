@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { DataSource } from "typeorm";
 import { Words } from "../entity/Words";
+import { authenticateFirebaseToken } from "../index";
 
 const router = Router();
 
@@ -36,6 +37,18 @@ export function createWordsRouter(dataSource: DataSource) {
     } catch (error) {
       res.status(500).json({ error: "Error fetching words" });
     }
+  });
+
+  router.post("/upload-words", authenticateFirebaseToken, async (req, res) => {
+    const { words } = req.body;
+
+    if (!words) {
+      return res.status(400).json({ error: "No words provided" });
+    }
+
+    // @ts-ignore
+    console.log(req.user);
+    console.log(words);
   });
 
   return router;
