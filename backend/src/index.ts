@@ -6,7 +6,7 @@ import express from "express";
 import cors from "cors";
 import { DataSource } from "typeorm";
 import { Words } from "./entity/Words";
-import { Users } from "./entity/Users";
+//import { Users } from "./entity/Users";
 import { createWordsRouter } from "./routes/WordsRoute";
 import http from "http";
 import crypto from "crypto";
@@ -79,7 +79,7 @@ const dataSource = new DataSource({
     rejectUnauthorized: true,
     ca: fs.readFileSync(process.env.DATABASE_CERT_PATH ?? "").toString(),
   },
-  entities: [Words, Users],
+  entities: [Words],
 });
 
 dataSource.initialize().then(() => {
