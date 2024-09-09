@@ -23,6 +23,7 @@ const LetterBox: React.FC<LetterBoxProps> = ({
 }) => {
   const [correctType, setCorrectType] = useState<number>(0);
   const [isWinningRow, setIsWinningRow] = useState<boolean>(false);
+  const [boxWidth, setBoxWidth] = useState<number>(10);
 
   useEffect(() => {
     setCorrectType(0);
@@ -66,6 +67,15 @@ const LetterBox: React.FC<LetterBoxProps> = ({
     }
   }, [hasGuessed, guessedLetter, answer, name, guessedLettersArray]);
 
+  useEffect(() => {
+    const padding = 11;
+    const totalPadding = padding * (answer.length - 1);
+    const availableWidth = window.innerWidth - totalPadding;
+
+    const calculatedBoxWidth = Math.floor(availableWidth / answer.length);
+    setBoxWidth(Math.max(calculatedBoxWidth, 24));
+  }, [answer]);
+
   let boxColor = "bg-neutral-200 border-neutral-300 text-black";
 
   if (hasFocus) {
@@ -78,9 +88,9 @@ const LetterBox: React.FC<LetterBoxProps> = ({
 
   return (
     <div
-      className={`border ${boxColor} ${hasWon && !isWinningRow && "opacity-75"} w-16 h-16 rounded ${loading ? "animate-pulse" : ""}
-      flex items-center justify-center text-center transition-all 
-      duration-200 ease-in-out text-2xl`}
+      className={`border ${boxColor} ${hasWon && !isWinningRow && "opacity-50"} transition-all duration-300 ease-in-out h-16 rounded ${loading ? "animate-pulse" : ""}
+      flex items-center justify-center text-center text-2xl`}
+      style={{ width: `${boxWidth}px` }}
     >
       {guessedLetter}
     </div>

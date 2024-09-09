@@ -8,7 +8,7 @@ const router = Router();
 
 export function createWordsRouter(dataSource: DataSource) {
   router.get("/get-word", async (req, res) => {
-    const { length, category } = req.query;
+    const { length, difficulty, category, language } = req.query;
 
     try {
       const wordRepo = dataSource.getRepository(Words);
@@ -32,6 +32,22 @@ export function createWordsRouter(dataSource: DataSource) {
         });
 
         console.log("category", category);
+      }
+
+      if (difficulty) {
+        query = query.andWhere("words.difficulty = :difficulty", {
+          difficulty: parseInt(difficulty as string, 10),
+        });
+
+        console.log("difficulty", difficulty);
+      }
+
+      if (language) {
+        query = query.andWhere("words.language = :language", {
+          language: language as string,
+        });
+
+        console.log("language", language);
       }
 
       const randomWord = await query.getOne();
@@ -80,8 +96,10 @@ export function createWordsRouter(dataSource: DataSource) {
         const wordRepo = dataSource.getRepository(Words);
 
         for (const wordData of words) {
-          const { word, length, category, description, language, difficulty } =
-            wordData;
+          const { word, category, description, language, difficulty } =
+            wordData as Words;
+
+          const length = word.length;
 
           // Validate that all required fields are present
           if (
@@ -97,14 +115,25 @@ export function createWordsRouter(dataSource: DataSource) {
               .json({ error: "Missing required fields in word data" });
           }
 
-          await wordRepo.save({
-            word,
-            length,
-            category,
-            description,
-            language,
-            difficulty,
+          // Check if word already exists
+          const existingWord = await wordRepo.find({
+            where: {
+              word: word,
+            },
           });
+
+          if (!existingWord) {
+            await wordRepo.save({
+              word,
+              length,
+              category,
+              description,
+              language,
+              difficulty,
+            });
+          } else {
+            console.log("Skipping existing word", word);
+          }
         }
 
         return res

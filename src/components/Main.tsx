@@ -7,20 +7,30 @@ import { IoMdReturnLeft } from "react-icons/io";
 import { addSolvedWord } from "../util/FirebaseFunctions";
 import Button from "./Button.tsx";
 import { fetchRandomWord } from "../util/PostgresqlFunctions.tsx";
+import { WordInterface } from "../util/Other.tsx";
+import { useSearchParams } from "react-router-dom";
 
 const alphabetRowOne = "QWERTYUIOPÅ";
 const alphabetRowTwo = "ASDFGHJKLÆØ";
 const alphabetRowThree = "ZXCVBNM";
 
 const Main = (): ReactElement => {
+  const [searchParams] = useSearchParams();
+
+  const length = searchParams.get("length") ?? "5";
+  const difficulty = searchParams.get("difficulty") ?? "1";
+  const category = searchParams.get("category") ?? "all";
+  const language = searchParams.get("language") ?? "no";
+
   const [rows] = useState<number>(5);
-  const [columns] = useState<number>(5);
+  const [columns] = useState<number>(parseInt(length, 10));
   const [currentRow, setCurrentRow] = useState<number>(0);
   const [currentColumn, setCurrentColumn] = useState<number>(0);
   const [attempts, setAttempts] = useState<string[][]>(
     Array.from({ length: rows }, () => Array(columns).fill("")),
   );
   const [answer, setAnswer] = useState<string>("");
+  const [wordData, setWordData] = useState<WordInterface>();
   const [loading, setLoading] = useState<boolean>(true);
   const [won, setWon] = useState<boolean>(false);
 
@@ -118,10 +128,19 @@ const Main = (): ReactElement => {
       setLoading(true);
 
       try {
-        const word = await fetchRandomWord();
+        const fetchedData = await fetchRandomWord(
+          parseInt(length, 10),
+          parseInt(difficulty, 10),
+          category,
+          language,
+        );
 
-        setAnswer(word.toUpperCase());
-        return word;
+        const answer = fetchedData.word.toUpperCase();
+
+        setWordData(fetchedData);
+        setAnswer(answer);
+
+        return answer;
       } catch (error) {
         console.error(error);
         return "";
@@ -170,12 +189,15 @@ const Main = (): ReactElement => {
         )}
 
         {currentRow - 1 === rows - 1 && !won && (
-          <div className="flex flex-col items-center">
-            <p className="text-base/8 text-red-600">
+          <div className="flex flex-col items-center text-center space-y-1 px-2">
+            <p className="text-lg text-red-600">
               Beklager, du klarte det ikke :(
             </p>
-            <p className="text-sm text-neutral-700">
+            <p className="text-base/8 text-neutral-700">
               Riktig svar var: {answer}
+            </p>
+            <p className="text-sm text-neutral-700">
+              {wordData?.description ?? ""}
             </p>
           </div>
         )}
@@ -247,7 +269,7 @@ const Main = (): ReactElement => {
 
         <div className="flex flex-col items-center justify-center w-full space-y-2 px-2">
           <button
-            className={`p-2 border border-blue-700 mt-8 text-sm w-full sm:w-64 rounded-full ${won || currentRow - 1 === rows - 1 ? "bg-blue-700 text-white" : "border border-blue-700 text-blue-700"}`}
+            className={`p-2 border border-blue-700 text-sm w-full sm:w-64 rounded-full ${won || currentRow - 1 === rows - 1 ? "bg-blue-700 text-white" : "border border-blue-700 text-blue-700"}`}
             onClick={async (e: React.MouseEvent<HTMLButtonElement>) => {
               // This is a special button, that is why we don't want to use the default buttons.
 
@@ -266,9 +288,17 @@ const Main = (): ReactElement => {
               setCurrentColumn(0);
               setWon(false);
 
-              const word = await fetchRandomWord();
+              const fetchedData = await fetchRandomWord(
+                parseInt(length, 10),
+                parseInt(difficulty, 10),
+                category,
+                language,
+              );
 
-              setAnswer(word.toUpperCase());
+              const answer = fetchedData.word.toUpperCase();
+
+              setWordData(fetchedData);
+              setAnswer(answer);
               setLoading(false);
             }}
           >

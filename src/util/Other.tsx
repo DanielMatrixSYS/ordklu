@@ -14,3 +14,16 @@ export const formatTime = (seconds: number): string => {
     return `${hours} time${hours === 1 ? "" : "r"}, ${remainingMinutes} minutt${remainingMinutes === 1 ? "" : "er"} og ${remainingSeconds} sekund${remainingSeconds === 1 ? "" : "er"}`;
   }
 };
+
+export interface WordInterface {
+  id: number;
+  length: number;
+  category: string;
+  description: string;
+  difficulty: number;
+  language: string;
+}
+
+export interface RetrievedWordInterface extends WordInterface {
+  word: string;
+}

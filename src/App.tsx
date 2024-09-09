@@ -3,6 +3,7 @@ import Header from "./components/Header";
 import { lazy, Suspense } from "react";
 import AdminRoute from "./components/Routes/AdminRoute";
 
+const GameSetup = lazy(() => import("./components/GameSetup"));
 const Main = lazy(() => import("./components/Main"));
 const MainMenu = lazy(() => import("./components/MainMenu"));
 const Login = lazy(() => import("./components/Login"));
@@ -17,6 +18,7 @@ function App() {
         <Suspense fallback={<div>Laster inn...</div>}>
           <Routes>
             <Route path="/" element={<MainMenu />} />
+            <Route path="/setup" element={<GameSetup />} />
             <Route path="/game" element={<Main />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
