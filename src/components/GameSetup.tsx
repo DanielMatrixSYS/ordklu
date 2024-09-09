@@ -56,15 +56,8 @@ const GameSetup: FC = () => {
         possibleLengths[Math.floor(Math.random() * possibleLengths.length)];
     }
 
-    console.log(
-      "Starting game with difficulty:",
-      difficulty,
-      "and word length:",
-      randomLength,
-    );
-
     navigate(
-      `/game?length=${randomLength}&difficulty=${difficulty}&theme=all&language=no`,
+      `/game?length=${randomLength}&difficulty=${difficulty}&category=all&language=no`,
     );
   };
 

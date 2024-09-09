@@ -28,7 +28,7 @@ export function createWordsRouter(dataSource: DataSource) {
 
       if (category && category !== "all") {
         query = query.andWhere("words.category = :category", {
-          category: category as string,
+          category: category.toString().toLowerCase(),
         });
 
         console.log("category", category);
@@ -44,7 +44,7 @@ export function createWordsRouter(dataSource: DataSource) {
 
       if (language) {
         query = query.andWhere("words.language = :language", {
-          language: language as string,
+          language: language.toString().toUpperCase(),
         });
 
         console.log("language", language);
