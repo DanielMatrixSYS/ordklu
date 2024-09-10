@@ -12,13 +12,19 @@ export async function updateDailyWord() {
       .returning("id")
       .execute();
 
+    console.log("hello");
+
     const wordRepo = dataSource.getRepository(Words);
+
+    console.log("hello2");
 
     const newDailyWord = await wordRepo
       .createQueryBuilder("words")
       .orderBy("RANDOM()")
       .where("words.id != :id", { id: updatedData.raw[0].id })
       .getOne();
+
+    console.log("hello3");
 
     if (newDailyWord) {
       await wordRepo.update(newDailyWord.id, { daily: true });
