@@ -8,7 +8,7 @@ export async function updateDailyWord() {
       .createQueryBuilder()
       .update(Words)
       .set({ daily: false })
-      .where("daily = true")
+      .where("words.daily = true")
       .returning("id")
       .execute();
 
@@ -17,6 +17,7 @@ export async function updateDailyWord() {
     let query = wordRepo
       .createQueryBuilder("words")
       .orderBy("RANDOM()")
+      .where("words.length BETWEEN 4 AND 6")
       .limit(1);
 
     if (updatedData.raw.length > 0) {
