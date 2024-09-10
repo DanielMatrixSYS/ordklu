@@ -3,50 +3,22 @@ import { DataSource } from "typeorm";
 import { Words } from "../entity/Words";
 import { authenticateFirebaseToken, FirebaseRequest } from "../middleware/Auth";
 import { firebaseAdmin } from "../index";
-import { updateDailyWord } from "../other/DailywordTask";
 
 const router = Router();
 
 export function createWordsRouter(dataSource: DataSource) {
-  router.get("/words/get", async (req, res) => {
-    const { length, difficulty, category, language } = req.query;
-
+  router.get("/words/get/daily", async (req, res) => {
     try {
       const wordRepo = dataSource.getRepository(Words);
 
-      let query = wordRepo
+      const randomWord = wordRepo
         .createQueryBuilder("words")
-        .orderBy("RANDOM()")
-        .limit(1);
-
-      if (length) {
-        query = query.andWhere("LENGTH(words.word) = :length", {
-          length: parseInt(length as string, 10),
-        });
-      }
-
-      if (category && category !== "all") {
-        query = query.andWhere("words.category = :category", {
-          category: category.toString().toLowerCase(),
-        });
-      }
-
-      if (difficulty) {
-        query = query.andWhere("words.difficulty = :difficulty", {
-          difficulty: parseInt(difficulty as string, 10),
-        });
-      }
-
-      if (language) {
-        query = query.andWhere("words.language = :language", {
-          language: language.toString().toUpperCase(),
-        });
-      }
-
-      const randomWord = await query.getOne();
+        .where("words.daily = true")
+        .limit(1)
+        .getOne();
 
       if (randomWord) {
-        console.log("Word requested from user: ", randomWord);
+        console.log("Daily word requested from user: ", randomWord);
 
         res.json(randomWord);
       } else res.status(400).json({ error: "No words found" });
@@ -55,11 +27,35 @@ export function createWordsRouter(dataSource: DataSource) {
     }
   });
 
-  router.get("/words/daily", async (req, res) => {
+  router.get("/words/get/custom", async (req, res) => {
+    const { length, category, language, difficulty } = req.query;
+
+    if (!length || !category || !language || !difficulty) {
+      return res
+        .status(400)
+        .json({ error: "Missing required query parameters" });
+    }
+
     try {
-      await updateDailyWord();
+      const wordRepo = dataSource.getRepository(Words);
+
+      const randomWord = wordRepo
+        .createQueryBuilder("words")
+        .where("words.length = :length", { length })
+        .andWhere("words.category = :category", { category })
+        .andWhere("words.language = :language", { language })
+        .andWhere("words.difficulty = :difficulty", { difficulty })
+        .orderBy("RANDOM()")
+        .limit(1)
+        .getOne();
+
+      if (randomWord) {
+        console.log("Custom word requested from user: ", randomWord);
+
+        res.json(randomWord);
+      } else res.status(400).json({ error: "No words found" });
     } catch (error) {
-      res.status(500).json({ error: "Error updating daily word" });
+      res.status(500).json({ error: "Error fetching words" });
     }
   });
 
