@@ -125,13 +125,13 @@ export function createWordsRouter(dataSource: DataSource) {
           }
 
           // Check if word already exists
-          const existingWord = await wordRepo.find({
-            where: {
-              word: word,
-            },
-          });
+          const foundWord = await wordRepo
+            .createQueryBuilder("words")
+            .where("words.word = :word", { word })
+            .limit(1)
+            .getOne();
 
-          if (!existingWord) {
+          if (!foundWord) {
             await wordRepo.save({
               word,
               length,
