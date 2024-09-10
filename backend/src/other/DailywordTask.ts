@@ -18,6 +18,8 @@ export async function updateDailyWord() {
 
     console.log("hello2");
 
+    console.log("Updated data:", updatedData);
+
     const newDailyWord = await wordRepo
       .createQueryBuilder("words")
       .orderBy("RANDOM()")
