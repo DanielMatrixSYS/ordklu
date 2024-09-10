@@ -18,7 +18,7 @@ export function createWordsRouter(dataSource: DataSource) {
         .getOne();
 
       if (randomWord) {
-        console.log("Daily word requested from user: ", randomWord);
+        console.log("Daily word requested from user: ", randomWord.word);
 
         res.json(randomWord);
       } else res.status(400).json({ error: "No words found" });
@@ -30,7 +30,7 @@ export function createWordsRouter(dataSource: DataSource) {
   router.get("/words/get/custom", async (req, res) => {
     const { length, category, language, difficulty } = req.query;
 
-    if (!length || !category || !language || !difficulty) {
+    if (!length || !language) {
       return res
         .status(400)
         .json({ error: "Missing required query parameters" });
@@ -39,18 +39,28 @@ export function createWordsRouter(dataSource: DataSource) {
     try {
       const wordRepo = dataSource.getRepository(Words);
 
-      const randomWord = await wordRepo
+      let query = wordRepo
         .createQueryBuilder("words")
         .where("words.length = :length", { length })
-        .andWhere("words.category = :category", { category })
         .andWhere("words.language = :language", { language })
-        .andWhere("words.difficulty = :difficulty", { difficulty })
+        .andWhere("words.daily = false")
         .orderBy("RANDOM()")
-        .limit(1)
-        .getOne();
+        .limit(1);
+
+      if (category) {
+        query = query.andWhere("words.category = :category", { category });
+      }
+
+      if (difficulty) {
+        query = query.andWhere("words.difficulty = :difficulty", {
+          difficulty,
+        });
+      }
+
+      const randomWord = await query.getOne();
 
       if (randomWord) {
-        console.log("Custom word requested from user: ", randomWord);
+        console.log("Custom word requested from user: ", randomWord.word);
 
         res.json(randomWord);
       } else res.status(400).json({ error: "No words found" });
