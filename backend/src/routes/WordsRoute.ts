@@ -11,7 +11,7 @@ export function createWordsRouter(dataSource: DataSource) {
     try {
       const wordRepo = dataSource.getRepository(Words);
 
-      const randomWord = wordRepo
+      const randomWord = await wordRepo
         .createQueryBuilder("words")
         .where("words.daily = true")
         .limit(1)
@@ -39,7 +39,7 @@ export function createWordsRouter(dataSource: DataSource) {
     try {
       const wordRepo = dataSource.getRepository(Words);
 
-      const randomWord = wordRepo
+      const randomWord = await wordRepo
         .createQueryBuilder("words")
         .where("words.length = :length", { length })
         .andWhere("words.category = :category", { category })
