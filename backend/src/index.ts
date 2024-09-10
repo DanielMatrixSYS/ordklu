@@ -11,6 +11,7 @@ import { createWordsRouter } from "./routes/WordsRoute";
 import http from "http";
 import crypto from "crypto";
 import rateLimit from "express-rate-limit";
+import { dailyWordTask, updateDailyWord } from "./other/DailywordTask";
 
 dotenv.config();
 
@@ -50,7 +51,7 @@ app.use(
 
 app.use(express.json());
 
-const dataSource = new DataSource({
+export const dataSource = new DataSource({
   type: "postgres",
   host: process.env.DATABASE_HOST ?? "localhost",
   port: parseInt(process.env.DATABASE_PORT ?? "5432", 10),
@@ -74,6 +75,8 @@ dataSource.initialize().then(() => {
 
   app.use("/v1", apiLimiter);
   app.use("/v1", createWordsRouter(dataSource));
+
+  dailyWordTask();
 
   // HTTP
   // Nginx will handle HTTPS

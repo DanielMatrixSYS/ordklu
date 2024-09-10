@@ -1,13 +1,14 @@
 import { Router } from "express";
 import { DataSource } from "typeorm";
 import { Words } from "../entity/Words";
-import { authenticateFirebaseToken, FirebaseRequest } from "../middleware/auth";
+import { authenticateFirebaseToken, FirebaseRequest } from "../middleware/Auth";
 import { firebaseAdmin } from "../index";
+import { updateDailyWord } from "../other/DailywordTask";
 
 const router = Router();
 
 export function createWordsRouter(dataSource: DataSource) {
-  router.get("/get-word", async (req, res) => {
+  router.get("/words/get", async (req, res) => {
     const { length, difficulty, category, language } = req.query;
 
     try {
@@ -22,37 +23,31 @@ export function createWordsRouter(dataSource: DataSource) {
         query = query.andWhere("LENGTH(words.word) = :length", {
           length: parseInt(length as string, 10),
         });
-
-        console.log("length", length);
       }
 
       if (category && category !== "all") {
         query = query.andWhere("words.category = :category", {
           category: category.toString().toLowerCase(),
         });
-
-        console.log("category", category);
       }
 
       if (difficulty) {
         query = query.andWhere("words.difficulty = :difficulty", {
           difficulty: parseInt(difficulty as string, 10),
         });
-
-        console.log("difficulty", difficulty);
       }
 
       if (language) {
         query = query.andWhere("words.language = :language", {
           language: language.toString().toUpperCase(),
         });
-
-        console.log("language", language);
       }
 
       const randomWord = await query.getOne();
 
       if (randomWord) {
+        console.log("Word requested from user: ", randomWord);
+
         res.json(randomWord);
       } else res.status(400).json({ error: "No words found" });
     } catch (error) {
@@ -60,8 +55,16 @@ export function createWordsRouter(dataSource: DataSource) {
     }
   });
 
+  router.get("/words/daily", async (req, res) => {
+    try {
+      updateDailyWord();
+    } catch (error) {
+      res.status(500).json({ error: "Error updating daily word" });
+    }
+  });
+
   router.post(
-    "/upload-words",
+    "/words/upload",
     authenticateFirebaseToken,
     async (req: FirebaseRequest, res) => {
       const { words } = req.body;
@@ -131,6 +134,8 @@ export function createWordsRouter(dataSource: DataSource) {
               language,
               difficulty,
             });
+
+            console.log("Uploaded word", word);
           } else {
             console.log("Skipping existing word", word);
           }

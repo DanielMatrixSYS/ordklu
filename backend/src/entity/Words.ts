@@ -22,4 +22,13 @@ export class Words {
 
   @Column()
   difficulty!: number;
+
+  @Column()
+  daily!: boolean;
+
+  @Column()
+  attempts!: number;
+
+  @Column()
+  solves!: number;
 }

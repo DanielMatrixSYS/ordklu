@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { firebaseAdmin } from "../index"; // Assuming firebaseAdmin is still in index.ts
+import { firebaseAdmin } from "../index";
 import * as admin from "firebase-admin";
 
 export interface FirebaseRequest extends Request {
