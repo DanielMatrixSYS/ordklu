@@ -9,18 +9,22 @@ export async function updateDailyWord() {
       .update(Words)
       .set({ daily: false })
       .where("daily = true")
-      .returning("*")
+      .returning("id")
       .execute();
 
-    /*const newDailyWord = await wordRepo
+    const wordRepo = dataSource.getRepository(Words);
+
+    const newDailyWord = await wordRepo
       .createQueryBuilder("words")
       .orderBy("RANDOM()")
-      .where("words.word != :word", { word: currentDailyWord?.word })
+      .where("words.id != :id", { id: updatedData.raw[0].id })
       .getOne();
 
     if (newDailyWord) {
       await wordRepo.update(newDailyWord.id, { daily: true });
-    }*/
+
+      console.log("New daily word:", newDailyWord);
+    }
 
     console.log("Updated data:", updatedData);
 

@@ -57,7 +57,7 @@ export function createWordsRouter(dataSource: DataSource) {
 
   router.get("/words/daily", async (req, res) => {
     try {
-      updateDailyWord();
+      await updateDailyWord();
     } catch (error) {
       res.status(500).json({ error: "Error updating daily word" });
     }
