@@ -11,7 +11,7 @@ import { createWordsRouter } from "./routes/WordsRoute";
 import http from "http";
 import crypto from "crypto";
 import rateLimit from "express-rate-limit";
-import { dailyWordTask, updateDailyWord } from "./other/DailywordTask";
+import { dailyWordTask } from "./other/DailywordTask";
 
 dotenv.config();
 

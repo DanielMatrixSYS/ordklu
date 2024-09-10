@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import { dataSource } from "../index";
 import { Words } from "../entity/Words";
+import * as cronParser from "cron-parser";
 
 export async function updateDailyWord() {
   try {
@@ -41,5 +42,15 @@ export async function updateDailyWord() {
 }
 
 export function dailyWordTask() {
-  cron.schedule("0 0 * * *", updateDailyWord);
+  cron.schedule("0 0 * * *", updateDailyWord, {
+    timezone: "Europe/Oslo",
+  });
+
+  console.log(
+    "Daily word task started! Executing at: ",
+    cronParser
+      .parseExpression("0 0 * * *", { tz: "Europe/Oslo" })
+      .next()
+      .toString(),
+  );
 }
