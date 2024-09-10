@@ -47,7 +47,7 @@ export function createWordsRouter(dataSource: DataSource) {
         .orderBy("RANDOM()")
         .limit(1);
 
-      if (typeof category === "string" && category.trim() !== "") {
+      if (category && category !== "all") {
         query = query.andWhere("words.category = :category", { category });
       }
 
