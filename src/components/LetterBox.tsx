@@ -73,6 +73,12 @@ const LetterBox: React.FC<LetterBoxProps> = ({
     const availableWidth = window.innerWidth - totalPadding;
 
     const calculatedBoxWidth = Math.floor(availableWidth / answer.length);
+
+    if (calculatedBoxWidth > 64) {
+      setBoxWidth(64);
+      return;
+    }
+
     setBoxWidth(Math.max(calculatedBoxWidth, 24));
   }, [answer]);
 

@@ -31,14 +31,14 @@ const MainMenu = () => {
       <div className="flex flex-col items-center mt-28 w-full">
         <button
           className="px-8 w-2/3 sm:w-96 py-2 bg-blue-500 text-white rounded-full hover:scale-105 transition-all duration-300"
-          onClick={() => navigate("/game")}
+          onClick={() => navigate("/game?daily=true")}
         >
           Gjett dagens ord
         </button>
 
         <button
           className="px-8 py-2 w-2/3 sm:w-96 border border-blue-700 text-sm text-blue-700 active:bg-blue-300 rounded-full bg-transparent mt-4 hover:scale-105 transition-all duration-300"
-          onClick={() => navigate("/setup")}
+          onClick={() => navigate("/game/setup")}
         >
           Lag eget spill
         </button>

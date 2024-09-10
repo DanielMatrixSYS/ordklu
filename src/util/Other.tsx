@@ -27,3 +27,14 @@ export interface WordInterface {
 export interface RetrievedWordInterface extends WordInterface {
   word: string;
 }
+
+export function stringToBoolean(str: string): boolean {
+  const normalizedStr = str.trim().toLowerCase();
+
+  return (
+    normalizedStr === "true" ||
+    normalizedStr === "1" ||
+    normalizedStr === "yes" ||
+    normalizedStr === "y"
+  );
+}

@@ -18,7 +18,7 @@ function App() {
         <Suspense fallback={<div>Laster inn...</div>}>
           <Routes>
             <Route path="/" element={<MainMenu />} />
-            <Route path="/setup" element={<GameSetup />} />
+            <Route path="/game/setup" element={<GameSetup />} />
             <Route path="/game" element={<Main />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />

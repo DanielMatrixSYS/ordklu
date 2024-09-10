@@ -6,90 +6,164 @@ import { FaBackspace, FaSpinner } from "react-icons/fa";
 import { IoMdReturnLeft } from "react-icons/io";
 import { addSolvedWord } from "../util/FirebaseFunctions";
 import Button from "./Button.tsx";
-import { fetchRandomWord } from "../util/PostgresqlFunctions.tsx";
-import { WordInterface } from "../util/Other.tsx";
-import { useSearchParams } from "react-router-dom";
+import { WordInterface, stringToBoolean } from "../util/Other.tsx";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import AltButton from "./AltButton.tsx";
+import { fetchDailyWord, fetchCustomWord } from "../util/PostgresqlFunctions";
 
 const alphabetRowOne = "QWERTYUIOPÅ";
 const alphabetRowTwo = "ASDFGHJKLÆØ";
 const alphabetRowThree = "ZXCVBNM";
 
 const Main = (): ReactElement => {
+  const navigate = useNavigate();
+
   const [searchParams] = useSearchParams();
 
   const length = searchParams.get("length") ?? "5";
   const difficulty = searchParams.get("difficulty") ?? "1";
   const category = searchParams.get("category") ?? "all";
-  const language = searchParams.get("language") ?? "no";
+  const language = searchParams.get("language") ?? "NO";
+  const isDaily = searchParams.get("daily") ?? "false";
 
   const [rows] = useState<number>(5);
   const [columns] = useState<number>(parseInt(length, 10));
-  const [currentRow, setCurrentRow] = useState<number>(0);
-  const [currentColumn, setCurrentColumn] = useState<number>(0);
-  const [attempts, setAttempts] = useState<string[][]>(
-    Array.from({ length: rows }, () => Array(columns).fill("")),
-  );
   const [answer, setAnswer] = useState<string>("");
   const [wordData, setWordData] = useState<WordInterface>();
   const [loading, setLoading] = useState<boolean>(true);
-  const [won, setWon] = useState<boolean>(false);
+
+  const [gameState, setGameState] = useState({
+    currentRow: 0,
+    currentColumn: 0,
+    won: false,
+    attempts: Array.from({ length: rows }, () => Array(columns).fill("")),
+  });
+
+  const setCurrentRow = (row: number): void => {
+    setGameState((prev) => ({ ...prev, currentRow: row }));
+  };
+
+  const setCurrentColumn = (column: number): void => {
+    setGameState((prev) => ({ ...prev, currentColumn: column }));
+  };
+
+  const setWon = (won: boolean): void => {
+    setGameState((prev) => ({ ...prev, won }));
+  };
+
+  const setAttempts = (attempts: string[][]): void => {
+    setGameState((prev) => ({ ...prev, attempts }));
+  };
+
+  const getWord = async (): Promise<string> => {
+    setLoading(true);
+    try {
+      const isDailyBoolean = stringToBoolean(isDaily.toString());
+      const fetchedData = isDailyBoolean
+        ? await fetchDailyWord()
+        : await fetchCustomWord(
+            parseInt(length, 10),
+            parseInt(difficulty, 10),
+            category,
+            language,
+          );
+
+      const answer = fetchedData.word.toUpperCase();
+
+      setGameState({
+        currentRow: 0,
+        currentColumn: 0,
+        won: false,
+        attempts: Array.from({ length: rows }, () => Array(columns).fill("")),
+      });
+
+      setWordData(fetchedData);
+      setAnswer(answer);
+
+      return answer;
+    } catch (error) {
+      console.error(error);
+      return "";
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderKeyboardRow = (letters: string[]) => (
+    <div className="flex flex-wrap w-full space-x-[3px] items-center justify-center">
+      {letters.map((letter, i) => (
+        <KeyboardButton
+          value={letter}
+          OnClick={(): void => handleLetterClick(letter)}
+          key={i}
+          loading={loading}
+        />
+      ))}
+    </div>
+  );
 
   const handleLetterClick = useCallback(
     (letter: string): void => {
-      const newAttempts = [...attempts];
-      newAttempts[currentRow][currentColumn] = letter.toUpperCase();
+      const newAttempts = gameState.attempts;
+
+      newAttempts[gameState.currentRow][gameState.currentColumn] =
+        letter.toUpperCase();
 
       setAttempts(newAttempts);
 
-      if (currentColumn < columns - 1) {
-        setCurrentColumn((prev): number => prev + 1);
+      if (gameState.currentColumn < columns - 1) {
+        setCurrentColumn(gameState.currentColumn + 1);
       }
     },
 
-    [attempts, currentRow, currentColumn, columns],
+    [gameState, columns],
   );
 
   const handleEnterClick = useCallback((): void => {
-    const guess = attempts[currentRow].join("");
+    const guess = gameState.attempts[gameState.currentRow].join("") ?? "";
 
     if (guess.length < columns) {
       return; // Ensure the row is filled
     }
 
     if (guess !== answer) {
-      setCurrentRow((prev): number => prev + 1);
+      setCurrentRow(gameState.currentRow + 1);
       setCurrentColumn(0);
 
-      if (currentRow === rows - 1) {
+      if (gameState.currentRow === rows - 1) {
         console.log("You lost!");
+        playGameoverSound();
+      } else {
+        playErrorSound();
       }
     } else {
-      setCurrentRow((prev) => prev + 1);
+      setCurrentRow(gameState.currentRow + 1);
       setWon(true);
+      playWinningSound();
 
       addSolvedWord(answer);
     }
-  }, [attempts, currentRow, columns, rows, answer]);
+  }, [gameState, answer, rows, columns]);
 
   const handleBackspaceClick = useCallback((): void => {
-    if (currentColumn >= 0) {
-      const newAttempts = [...attempts];
-      newAttempts[currentRow][currentColumn] = "";
+    if (gameState.currentColumn >= 0) {
+      const newAttempts = gameState.attempts;
+      newAttempts[gameState.currentRow][gameState.currentColumn] = "";
 
       setAttempts(newAttempts);
 
-      if (currentColumn > 0) {
-        setCurrentColumn((prev: number) => prev - 1);
+      if (gameState.currentColumn > 0) {
+        setCurrentColumn(gameState.currentColumn - 1);
       }
     }
-  }, [currentColumn, attempts, currentRow]);
+  }, [gameState]);
 
   const handleKeyboardEvent = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight" && currentColumn < columns - 1) {
-        setCurrentColumn((prev: number) => prev + 1);
-      } else if (e.key === "ArrowLeft" && currentColumn > 0) {
-        setCurrentColumn((prev: number) => prev - 1);
+      if (e.key === "ArrowRight" && gameState.currentColumn < columns - 1) {
+        setCurrentColumn(gameState.currentColumn + 1);
+      } else if (e.key === "ArrowLeft" && gameState.currentColumn > 0) {
+        setCurrentColumn(gameState.currentColumn - 1);
       } else if (e.key === "Enter") {
         handleEnterClick();
       } else if (e.key === "Backspace") {
@@ -101,7 +175,7 @@ const Main = (): ReactElement => {
       }
     },
     [
-      currentColumn,
+      gameState,
       columns,
       handleEnterClick,
       handleBackspaceClick,
@@ -109,10 +183,52 @@ const Main = (): ReactElement => {
     ],
   );
 
-  const shouldDisplayKeyboard = (): boolean => {
-    if (won) return false;
+  const playWinningSound = (): void => {
+    const audio = new Audio("/sounds/solved.mp3");
 
-    return currentRow - 1 !== rows - 1;
+    audio.play();
+
+    audio.onended = (): void => {
+      audio.remove();
+    };
+
+    audio.onerror = (): void => {
+      console.error("Error playing audio");
+    };
+  };
+
+  const playErrorSound = (): void => {
+    const audio = new Audio("/sounds/error.mp3");
+
+    audio.play();
+
+    audio.onended = (): void => {
+      audio.remove();
+    };
+
+    audio.onerror = (): void => {
+      console.error("Error playing audio");
+    };
+  };
+
+  const playGameoverSound = (): void => {
+    const audio = new Audio("/sounds/gameover.mp3");
+
+    audio.play();
+
+    audio.onended = (): void => {
+      audio.remove();
+    };
+
+    audio.onerror = (): void => {
+      console.error("Error playing audio");
+    };
+  };
+
+  const shouldDisplayKeyboard = (): boolean => {
+    if (gameState.won) return false;
+
+    return gameState.currentRow - 1 !== rows - 1;
   };
 
   useEffect((): (() => void) => {
@@ -123,33 +239,12 @@ const Main = (): ReactElement => {
     };
   }, [handleKeyboardEvent]);
 
-  useEffect((): void => {
-    const getWord = async (): Promise<string> => {
-      setLoading(true);
-
-      try {
-        const fetchedData = await fetchRandomWord(
-          parseInt(length, 10),
-          parseInt(difficulty, 10),
-          category,
-          language,
-        );
-
-        const answer = fetchedData.word.toUpperCase();
-
-        setWordData(fetchedData);
-        setAnswer(answer);
-
-        return answer;
-      } catch (error) {
-        console.error(error);
-        return "";
-      }
+  useEffect(() => {
+    const fetchData = async (): Promise<void> => {
+      await getWord();
     };
 
-    getWord();
-
-    setLoading(false);
+    fetchData();
   }, []);
 
   return (
@@ -161,13 +256,15 @@ const Main = (): ReactElement => {
               <LetterBox
                 key={j}
                 name={`${i}${j}`}
-                hasFocus={i === currentRow && j === currentColumn}
+                hasFocus={
+                  i === gameState.currentRow && j === gameState.currentColumn
+                }
                 answer={answer}
-                guessedLetter={attempts[i][j]}
-                hasGuessed={i < currentRow}
-                guessedLettersArray={attempts[i]}
+                guessedLetter={gameState.attempts[i][j]}
+                hasGuessed={i < gameState.currentRow}
+                guessedLettersArray={gameState.attempts[i]}
                 loading={loading}
-                hasWon={won}
+                hasWon={gameState.won}
               />
             ))}
           </div>
@@ -180,21 +277,27 @@ const Main = (): ReactElement => {
           </div>
         )}
 
-        {won && (
-          <div className="flex space-x-2 items-center">
-            <p className="text-base/8 text-green-600">
-              Gratulerer, du klarte det!
+        {gameState.won && (
+          <div className="flex flex-col space-x-2 items-center justify-center text-center">
+            <p className="text-2xl/8 text-green-600">
+              Gratulerer, du gjetta det!
+            </p>
+
+            <p className="flex flex-col mt-4 space-y-2 text-sm text-neutral-700 items-center">
+              <span className="text-lg text-blue-700">{answer}</span>{" "}
+              {wordData?.description ?? ""}
             </p>
           </div>
         )}
 
-        {currentRow - 1 === rows - 1 && !won && (
+        {gameState.currentRow - 1 === rows - 1 && !gameState.won && (
           <div className="flex flex-col items-center text-center space-y-1 px-2">
-            <p className="text-lg text-red-600">
+            <p className="text-2xl/8 text-red-600">
               Beklager, du klarte det ikke :(
             </p>
             <p className="text-base/8 text-neutral-700">
-              Riktig svar var: {answer}
+              Riktig svar var:{" "}
+              <span className="text-lg font-bold">{answer}</span>
             </p>
             <p className="text-sm text-neutral-700">
               {wordData?.description ?? ""}
@@ -202,9 +305,10 @@ const Main = (): ReactElement => {
           </div>
         )}
 
-        {!won &&
-          currentRow - 1 < rows - 1 &&
-          attempts[currentRow].join("").length === columns && (
+        {!gameState.won &&
+          gameState.currentRow - 1 < rows - 1 &&
+          gameState.attempts[gameState.currentRow].join("").length ===
+            columns && (
             <div className="flex flex-row items-center justify-center w-36">
               <Button
                 value="Sjekk"
@@ -215,32 +319,13 @@ const Main = (): ReactElement => {
           )}
       </div>
 
-      <div className="flex flex-col mt-2 space-y-4 w-full">
+      <div className="flex flex-col mt-2 space-y-4 w-full items-center">
         {shouldDisplayKeyboard() && (
           <>
-            <div className="flex flex-wrap w-full space-x-2 items-center justify-center">
-              {alphabetRowOne.split("").map((letter, i) => (
-                <KeyboardButton
-                  value={letter}
-                  OnClick={(): void => handleLetterClick(letter)}
-                  key={i}
-                  loading={loading}
-                />
-              ))}
-            </div>
+            {renderKeyboardRow(alphabetRowOne.split(""))}
+            {renderKeyboardRow(alphabetRowTwo.split(""))}
 
-            <div className="flex flex-wrap w-full space-x-2 items-center justify-center">
-              {alphabetRowTwo.split("").map((letter, i) => (
-                <KeyboardButton
-                  value={letter}
-                  OnClick={(): void => handleLetterClick(letter)}
-                  key={i}
-                  loading={loading}
-                />
-              ))}
-            </div>
-
-            <div className="flex flex-wrap w-full space-x-2 items-center justify-center">
+            <div className="flex flex-row items-center justify-center">
               <button
                 onClick={handleEnterClick}
                 className="flex bg-neutral-100 items-center justify-center border w-10 h-14"
@@ -248,14 +333,7 @@ const Main = (): ReactElement => {
                 <IoMdReturnLeft />
               </button>
 
-              {alphabetRowThree.split("").map((letter, i) => (
-                <KeyboardButton
-                  value={letter}
-                  OnClick={(): void => handleLetterClick(letter)}
-                  key={i}
-                  loading={loading}
-                />
-              ))}
+              {renderKeyboardRow(alphabetRowThree.split(""))}
 
               <button
                 onClick={handleBackspaceClick}
@@ -267,43 +345,30 @@ const Main = (): ReactElement => {
           </>
         )}
 
-        <div className="flex flex-col items-center justify-center w-full space-y-2 px-2">
-          <button
-            className={`p-2 border border-blue-700 text-sm w-full sm:w-64 rounded-full ${won || currentRow - 1 === rows - 1 ? "bg-blue-700 text-white" : "border border-blue-700 text-blue-700"}`}
-            onClick={async (e: React.MouseEvent<HTMLButtonElement>) => {
-              // This is a special button, that is why we don't want to use the default buttons.
+        <div className="flex flex-col max-w-md items-center justify-center w-full space-y-2 px-2">
+          {!stringToBoolean(isDaily) && (
+            <button
+              className={`p-2 border border-blue-700 text-sm w-full rounded-full hover:scale-105 transition-all duration-300 ${gameState.won || gameState.currentRow - 1 === rows - 1 ? "bg-blue-700 text-white" : "border border-blue-700 text-blue-700"}`}
+              onClick={async (e: React.MouseEvent<HTMLButtonElement>) => {
+                // This is a special button, that is why we don't want to use the default buttons.
 
-              // Remove focus from the button.
-              // So the user can use the keyboard to play the game.
-              if (e.currentTarget) {
-                e.currentTarget.blur();
-              }
+                // Remove focus from the button.
+                // So the user can use the keyboard to play the game.
+                if (e.currentTarget) {
+                  e.currentTarget.blur();
+                }
 
-              setLoading(true);
-              setAttempts(
-                Array.from({ length: rows }, () => Array(columns).fill("")),
-              );
+                await getWord();
+              }}
+            >
+              Gi meg nytt ord
+            </button>
+          )}
 
-              setCurrentRow(0);
-              setCurrentColumn(0);
-              setWon(false);
-
-              const fetchedData = await fetchRandomWord(
-                parseInt(length, 10),
-                parseInt(difficulty, 10),
-                category,
-                language,
-              );
-
-              const answer = fetchedData.word.toUpperCase();
-
-              setWordData(fetchedData);
-              setAnswer(answer);
-              setLoading(false);
-            }}
-          >
-            Gi meg nytt ord
-          </button>
+          <AltButton
+            value="Endre innstillinger"
+            onClick={() => navigate("/game/setup")}
+          />
         </div>
       </div>
     </div>

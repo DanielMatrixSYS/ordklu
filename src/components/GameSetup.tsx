@@ -57,7 +57,7 @@ const GameSetup: FC = () => {
     }
 
     navigate(
-      `/game?length=${randomLength}&difficulty=${difficulty}&category=all&language=no`,
+      `/game?length=${randomLength}&difficulty=${difficulty}&daily=false&language=NO`,
     );
   };
 
