@@ -12,29 +12,26 @@ export async function updateDailyWord() {
       .returning("id")
       .execute();
 
-    console.log("hello");
-
     const wordRepo = dataSource.getRepository(Words);
 
-    console.log("hello2");
-
-    console.log("Updated data:", updatedData);
-
-    const newDailyWord = await wordRepo
+    let query = wordRepo
       .createQueryBuilder("words")
       .orderBy("RANDOM()")
-      .where("words.id != :id", { id: updatedData.raw[0].id })
-      .getOne();
+      .limit(1);
 
-    console.log("hello3");
+    if (updatedData.raw.length > 0) {
+      query = query.andWhere("words.id != :id", {
+        id: updatedData.raw[0].id,
+      });
+    }
+
+    const newDailyWord = await query.getOne();
 
     if (newDailyWord) {
-      await wordRepo.update(newDailyWord.id, { daily: true });
+      await wordRepo.update(newDailyWord, { daily: true });
 
       console.log("New daily word:", newDailyWord);
     }
-
-    console.log("Updated data:", updatedData);
 
     console.log("Daily word updated successfully!");
   } catch (error) {
