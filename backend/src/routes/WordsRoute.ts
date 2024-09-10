@@ -141,9 +141,20 @@ export function createWordsRouter(dataSource: DataSource) {
               difficulty,
             });
 
-            console.log("Uploaded word", word);
+            const userName =
+              req.user.displayName ?? req.user.email ?? "Unknown";
+
+            console.log("User", userName, "uploaded word", word);
           } else {
-            console.log("Skipping existing word", word);
+            const userName =
+              req.user.displayName ?? req.user.email ?? "Unknown";
+
+            console.log(
+              "User",
+              userName,
+              "tried to upload duplicate word",
+              word,
+            );
           }
         }
 
