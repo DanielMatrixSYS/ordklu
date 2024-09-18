@@ -1,15 +1,26 @@
 import LetterBox from "./LetterBox";
-import React, { useEffect, useState, useCallback, ReactElement } from "react";
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  ReactElement,
+  useContext,
+} from "react";
 import KeyboardButton from "./KeyboardButton";
 import "../index.css";
 import { FaBackspace, FaSpinner } from "react-icons/fa";
 import { IoMdReturnLeft } from "react-icons/io";
-import { addSolvedWord } from "../util/FirebaseFunctions";
+import {
+  addSolvedWord,
+  addSolvedDailyWord,
+  hasUserSolvedDailyWord,
+} from "../util/FirebaseFunctions";
 import Button from "./Button.tsx";
-import { WordInterface, stringToBoolean } from "../util/Other.tsx";
+import { WordInterface, stringToBoolean, formatTime } from "../util/Other.tsx";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import AltButton from "./AltButton.tsx";
 import { fetchDailyWord, fetchCustomWord } from "../util/PostgresqlFunctions";
+import { AuthContext, AuthContextProps } from "./Auth/AuthContext.tsx";
 
 const alphabetRowOne = "QWERTYUIOPÅ";
 const alphabetRowTwo = "ASDFGHJKLÆØ";
@@ -20,6 +31,8 @@ const Main = (): ReactElement => {
 
   const [searchParams] = useSearchParams();
 
+  const { user, loading } = useContext(AuthContext) as AuthContextProps;
+
   const length = searchParams.get("length") ?? "5";
   const difficulty = searchParams.get("difficulty") ?? "1";
   const category = searchParams.get("category") ?? "all";
@@ -29,14 +42,19 @@ const Main = (): ReactElement => {
   const [rows] = useState<number>(5);
   const [columns] = useState<number>(parseInt(length, 10));
   const [answer, setAnswer] = useState<string>("");
+  const [hasSolvedDaily, setHasSolvedDaily] = useState<boolean>(false);
+  const [hasSolvedDailyPreviously, setHasSolvedDailyPreviously] =
+    useState<boolean>(false);
   const [wordData, setWordData] = useState<WordInterface>();
-  const [loading, setLoading] = useState<boolean>(true);
+  const [gettingWord, setGettingWord] = useState<boolean>(true);
 
   const [gameState, setGameState] = useState({
     currentRow: 0,
     currentColumn: 0,
     won: false,
     attempts: Array.from({ length: rows }, () => Array(columns).fill("")),
+    gameFinished: false,
+    timeTaken: 0,
   });
 
   const setCurrentRow = (row: number): void => {
@@ -55,8 +73,29 @@ const Main = (): ReactElement => {
     setGameState((prev) => ({ ...prev, attempts }));
   };
 
+  const setGameFinished = (gameFinished: boolean): void => {
+    setGameState((prev) => ({ ...prev, gameFinished }));
+  };
+
+  const setTimer = (time: number): void => {
+    setGameState((prev) => ({ ...prev, timeTaken: time }));
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (gameState.gameFinished) return;
+
+      setTimer(gameState.timeTaken + 1);
+    }, 1000);
+
+    return (): void => {
+      clearTimeout(timer);
+    };
+  }, [gameState.timeTaken, gameState.gameFinished]);
+
   const getWord = async (): Promise<string> => {
-    setLoading(true);
+    setGettingWord(true);
+
     try {
       const isDailyBoolean = stringToBoolean(isDaily.toString());
       const fetchedData = isDailyBoolean
@@ -68,6 +107,32 @@ const Main = (): ReactElement => {
             language,
           );
 
+      if (isDailyBoolean) {
+        const hasSolved = await hasUserSolvedDailyWord(fetchedData.word);
+        setHasSolvedDaily(hasSolved);
+        setGameFinished(hasSolved);
+        setHasSolvedDailyPreviously(hasSolved);
+
+        if (hasSolved) {
+          setGameState({
+            currentRow: 0,
+            currentColumn: 0,
+            won: true,
+            attempts: Array.from({ length: rows }, () =>
+              Array(columns).fill(""),
+            ),
+            gameFinished: true,
+            timeTaken: 0,
+          });
+
+          for (let i = 0; i < columns; i++) {
+            gameState.attempts[0][i] = fetchedData.word[i].toUpperCase();
+          }
+
+          return fetchedData.word.toUpperCase();
+        }
+      }
+
       const answer = fetchedData.word.toUpperCase();
 
       setGameState({
@@ -75,6 +140,8 @@ const Main = (): ReactElement => {
         currentColumn: 0,
         won: false,
         attempts: Array.from({ length: rows }, () => Array(columns).fill("")),
+        gameFinished: false,
+        timeTaken: 0,
       });
 
       setWordData(fetchedData);
@@ -85,7 +152,7 @@ const Main = (): ReactElement => {
       console.error(error);
       return "";
     } finally {
-      setLoading(false);
+      setGettingWord(false);
     }
   };
 
@@ -96,7 +163,7 @@ const Main = (): ReactElement => {
           value={letter}
           OnClick={(): void => handleLetterClick(letter)}
           key={i}
-          loading={loading}
+          loading={gettingWord}
         />
       ))}
     </div>
@@ -104,6 +171,8 @@ const Main = (): ReactElement => {
 
   const handleLetterClick = useCallback(
     (letter: string): void => {
+      if (gameState.gameFinished) return;
+
       const newAttempts = gameState.attempts;
 
       newAttempts[gameState.currentRow][gameState.currentColumn] =
@@ -131,17 +200,60 @@ const Main = (): ReactElement => {
       setCurrentColumn(0);
 
       if (gameState.currentRow === rows - 1) {
-        console.log("You lost!");
         playGameoverSound();
+        setGameFinished(true);
+
+        if (stringToBoolean(isDaily)) {
+          addSolvedDailyWord(
+            answer,
+            gameState.attempts.filter((a) => a.join("").length > 0).length,
+            gameState.timeTaken,
+            false,
+            new Date().toISOString(),
+          );
+
+          setHasSolvedDaily(true);
+
+          return;
+        }
+
+        addSolvedWord(
+          answer,
+          gameState.attempts.filter((a) => a.join("").length > 0).length,
+          gameState.timeTaken,
+          false,
+          new Date().toISOString(),
+        );
       } else {
         playErrorSound();
       }
     } else {
       setCurrentRow(gameState.currentRow + 1);
       setWon(true);
+      setGameFinished(true);
       playWinningSound();
 
-      addSolvedWord(answer);
+      if (stringToBoolean(isDaily)) {
+        addSolvedDailyWord(
+          answer,
+          gameState.attempts.filter((a) => a.join("").length > 0).length,
+          gameState.timeTaken,
+          true,
+          new Date().toISOString(),
+        );
+
+        setHasSolvedDaily(true);
+
+        return;
+      }
+
+      addSolvedWord(
+        answer,
+        gameState.attempts.filter((a) => a.join("").length > 0).length,
+        gameState.timeTaken,
+        true,
+        new Date().toISOString(),
+      );
     }
   }, [gameState, answer, rows, columns]);
 
@@ -227,8 +339,17 @@ const Main = (): ReactElement => {
 
   const shouldDisplayKeyboard = (): boolean => {
     if (gameState.won) return false;
+    if (gameState.gameFinished) return false;
+    if (stringToBoolean(isDaily) && hasSolvedDaily) return false;
 
     return gameState.currentRow - 1 !== rows - 1;
+  };
+
+  const shouldDisplayLoginOrRegisterButtons = (): boolean => {
+    if (user) return false;
+    if (loading) return false;
+
+    return !gameState.gameFinished;
   };
 
   useEffect((): (() => void) => {
@@ -241,11 +362,15 @@ const Main = (): ReactElement => {
 
   useEffect(() => {
     const fetchData = async (): Promise<void> => {
+      if (loading) return;
+
       await getWord();
     };
 
     fetchData();
-  }, []);
+  }, [loading]);
+
+  const canDisplay = shouldDisplayLoginOrRegisterButtons();
 
   return (
     <div className="flex flex-col flex-grow w-full items-center mt-4 bg-pink-50">
@@ -263,7 +388,7 @@ const Main = (): ReactElement => {
                 guessedLetter={gameState.attempts[i][j]}
                 hasGuessed={i < gameState.currentRow}
                 guessedLettersArray={gameState.attempts[i]}
-                loading={loading}
+                loading={gettingWord}
                 hasWon={gameState.won}
               />
             ))}
@@ -287,6 +412,29 @@ const Main = (): ReactElement => {
               <span className="text-lg text-blue-700">{answer}</span>{" "}
               {wordData?.description ?? ""}
             </p>
+
+            <p className="text-sm text-neutral-700">
+              Tid brukt: {formatTime(gameState.timeTaken)}
+            </p>
+
+            {canDisplay && (
+              <div className="flex flex-col items-center justify-center w-full px-4 mt-8 space-y-2">
+                <AltButton
+                  value="Logg inn"
+                  onClick={() => navigate("/login")}
+                />
+                <p className="text-neutral-700/80">eller</p>
+
+                <AltButton
+                  value="Registrer deg"
+                  onClick={() => navigate("/register")}
+                />
+
+                <p className="text-sm text-neutral-700 italic">
+                  For å beholde progresjon
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -295,12 +443,18 @@ const Main = (): ReactElement => {
             <p className="text-2xl/8 text-red-600">
               Beklager, du klarte det ikke :(
             </p>
+
             <p className="text-base/8 text-neutral-700">
               Riktig svar var:{" "}
               <span className="text-lg font-bold">{answer}</span>
             </p>
+
             <p className="text-sm text-neutral-700">
               {wordData?.description ?? ""}
+            </p>
+
+            <p className="text-sm text-neutral-700">
+              Tid brukt: {formatTime(gameState.timeTaken)}
             </p>
           </div>
         )}
@@ -308,11 +462,12 @@ const Main = (): ReactElement => {
         {!gameState.won &&
           gameState.currentRow - 1 < rows - 1 &&
           gameState.attempts[gameState.currentRow].join("").length ===
-            columns && (
+            columns &&
+          !gameState.gameFinished && (
             <div className="flex flex-row items-center justify-center w-36">
               <Button
                 value="Sjekk"
-                disabled={loading}
+                disabled={gettingWord}
                 onClick={handleEnterClick}
               />
             </div>
@@ -328,7 +483,7 @@ const Main = (): ReactElement => {
             <div className="flex flex-row items-center justify-center">
               <button
                 onClick={handleEnterClick}
-                className="flex bg-neutral-100 items-center justify-center border w-10 h-14"
+                className="flex w-16 h-14 bg-neutral-100 items-center justify-center border"
               >
                 <IoMdReturnLeft />
               </button>
@@ -337,11 +492,17 @@ const Main = (): ReactElement => {
 
               <button
                 onClick={handleBackspaceClick}
-                className="flex bg-neutral-100 items-center justify-center border w-10 h-14"
+                className="flex bg-neutral-100 items-center justify-center border w-16 h-14"
               >
                 <FaBackspace />
               </button>
             </div>
+
+            {gameState.timeTaken > 0 && (
+              <p className="text-sm text-neutral-700">
+                Tid brukt: {formatTime(gameState.timeTaken)}
+              </p>
+            )}
           </>
         )}
 
@@ -365,11 +526,27 @@ const Main = (): ReactElement => {
             </button>
           )}
 
-          <AltButton
-            value="Endre innstillinger"
-            onClick={() => navigate("/game/setup")}
-          />
+          {!isDaily && (
+            <AltButton
+              value="Endre innstillinger"
+              onClick={() => navigate("/setup")}
+            />
+          )}
         </div>
+
+        {canDisplay && (
+          <div className="flex flex-col items-center justify-center w-full px-2 space-y-2">
+            <AltButton value="Logg inn" onClick={() => navigate("/login")} />
+            <p className="text-neutral-700/80">eller</p>
+
+            <AltButton
+              value="Registrer deg"
+              onClick={() => navigate("/register")}
+            />
+
+            <p className="text-sm text-neutral-700">For å beholde progresjon</p>
+          </div>
+        )}
       </div>
     </div>
   );

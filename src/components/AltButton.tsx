@@ -21,7 +21,7 @@ const AltButton: React.FC<AltButtonProps> = ({
   return (
     <button
       type={type}
-      className="flex items-center justify-center w-full p-2 border border-blue-700 text-sm text-blue-700 active:bg-blue-300 rounded-full bg-transparent mt-4 hover:scale-105 transition-all duration-300"
+      className="flex items-center justify-center w-full p-2 border border-blue-700 text-sm text-blue-700 active:bg-blue-300 rounded-full bg-transparent hover:scale-105 transition-all duration-300"
       onClick={onClick}
       disabled={disabled || loading}
     >

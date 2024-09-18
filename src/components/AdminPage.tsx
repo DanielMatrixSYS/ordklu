@@ -53,7 +53,7 @@ const AdminPage = () => {
 
                         auth.currentUser?.getIdToken().then((token: string) => {
                           fetch(
-                            `${import.meta.env.VITE_SERVER_URL}/${import.meta.env.VITE_SERVER_APIVERSION}/upload-words`,
+                            `${import.meta.env.VITE_SERVER_URL}/${import.meta.env.VITE_SERVER_APIVERSION}/words/upload`,
                             {
                               method: "POST",
                               headers: {

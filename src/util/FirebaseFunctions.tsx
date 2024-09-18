@@ -27,19 +27,25 @@ import {
   firebaseAuthErrorDetails,
 } from "../components/Auth/AuthErrorHandling.tsx";
 
-export const addSolvedWord = async (word: string): Promise<void> => {
+export interface WordEntry {
+  word: string;
+  attempts: number;
+  timeTaken: number;
+  solved: boolean;
+  dateSolved: string;
+}
+
+export const addSolvedDailyWord = async (
+  word: string,
+  attempts: number,
+  timeTaken: number,
+  solved: boolean,
+  dateSolved: string,
+): Promise<void> => {
   const auth = getAuth();
   const uid = auth.currentUser?.uid;
 
   if (!uid) {
-    const solvedWords = JSON.parse(
-      sessionStorage.getItem("solvedWords") || "[]",
-    ) as string[];
-
-    solvedWords.push(word);
-
-    sessionStorage.setItem("solvedWords", JSON.stringify(solvedWords));
-
     return;
   }
 
@@ -47,21 +53,28 @@ export const addSolvedWord = async (word: string): Promise<void> => {
     const docRef = doc(db, "users", uid);
     const docSnap = await getDoc(docRef);
 
+    const newWordEntry: WordEntry = {
+      word: word,
+      attempts: attempts,
+      timeTaken: timeTaken,
+      solved: solved,
+      dateSolved: dateSolved,
+    };
+
     if (!docSnap.exists()) {
       await setDoc(doc(db, "users", uid), {
-        solved: [word],
+        solvedDailyWords: [newWordEntry],
         totalSolved: 1,
       });
 
       return;
     }
 
-    const solvedWords = docSnap.data().solved;
-    solvedWords.push(word);
+    const solvedDailyWords = docSnap.data().solvedDailyWords || [];
+    solvedDailyWords.push(newWordEntry);
 
     await setDoc(docRef, {
-      solved: solvedWords,
-      totalSolved: solvedWords.length,
+      solvedDailyWords: solvedDailyWords,
     });
 
     return;
@@ -70,6 +83,115 @@ export const addSolvedWord = async (word: string): Promise<void> => {
   }
 
   return;
+};
+
+export const addSolvedWord = async (
+  word: string,
+  attempts: number,
+  timeTaken: number,
+  solved: boolean,
+  dateSolved: string,
+): Promise<void> => {
+  const auth = getAuth();
+  const uid = auth.currentUser?.uid;
+
+  if (!uid) {
+    return;
+  }
+
+  try {
+    const docRef = doc(db, "users", uid);
+    const docSnap = await getDoc(docRef);
+
+    const newWordEntry: WordEntry = {
+      word: word,
+      attempts: attempts,
+      timeTaken: timeTaken,
+      solved: solved,
+      dateSolved: dateSolved,
+    };
+
+    if (!docSnap.exists()) {
+      await setDoc(doc(db, "users", uid), {
+        solvedWords: [newWordEntry],
+        totalSolved: 1,
+      });
+
+      return;
+    }
+
+    const solvedWords = docSnap.data().solvedWords || [];
+    solvedWords.push(newWordEntry);
+
+    await setDoc(docRef, {
+      solvedWords: solvedWords,
+      totalSolved: solvedWords.filter((w: WordEntry) => w.solved).length,
+    });
+
+    return;
+  } catch (error) {
+    console.error(error);
+  }
+
+  return;
+};
+
+export const hasUserSolvedWord = async (word: string): Promise<boolean> => {
+  const auth = getAuth();
+  const uid = auth.currentUser?.uid;
+
+  if (!uid) {
+    return false;
+  }
+
+  try {
+    const docRef = doc(db, "users", uid);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      return false;
+    }
+
+    const solvedWords = docSnap.data().solvedWords || [];
+
+    return solvedWords.some(
+      (w: WordEntry) => w.word.toUpperCase() === word.toUpperCase(),
+    );
+  } catch (error) {
+    console.error(error);
+  }
+
+  return false;
+};
+
+export const hasUserSolvedDailyWord = async (
+  word: string,
+): Promise<boolean> => {
+  const auth = getAuth();
+  const uid = auth.currentUser?.uid;
+
+  if (!uid) {
+    return false;
+  }
+
+  try {
+    const docRef = doc(db, "users", uid);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      return false;
+    }
+
+    const solvedDailyWords = docSnap.data().solvedDailyWords || [];
+
+    return solvedDailyWords.some(
+      (w: WordEntry) => w.word.toUpperCase() === word.toUpperCase(),
+    );
+  } catch (error) {
+    console.error(error);
+  }
+
+  return false;
 };
 
 export const usernameExists = async (username: string): Promise<boolean> => {
