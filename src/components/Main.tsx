@@ -5,6 +5,7 @@ import React, {
   useCallback,
   ReactElement,
   useContext,
+  useRef,
 } from "react";
 import KeyboardButton from "./KeyboardButton";
 import "../index.css";
@@ -14,6 +15,7 @@ import {
   addSolvedWord,
   addSolvedDailyWord,
   hasUserSolvedDailyWord,
+  fetchUserSolvedWord,
 } from "../util/FirebaseFunctions";
 import Button from "./Button.tsx";
 import { WordInterface, stringToBoolean, formatTime } from "../util/Other.tsx";
@@ -40,7 +42,7 @@ const Main = (): ReactElement => {
   const isDaily = searchParams.get("daily") ?? "false";
 
   const [rows] = useState<number>(5);
-  const [columns] = useState<number>(parseInt(length, 10));
+  const [columns, setColumns] = useState<number>(parseInt(length, 10));
   const [answer, setAnswer] = useState<string>("");
   const [hasSolvedDaily, setHasSolvedDaily] = useState<boolean>(false);
   const [hasSolvedDailyPreviously, setHasSolvedDailyPreviously] =
@@ -55,6 +57,12 @@ const Main = (): ReactElement => {
     attempts: Array.from({ length: rows }, () => Array(columns).fill("")),
     gameFinished: false,
     timeTaken: 0,
+  });
+
+  const [gameSounds] = useState({
+    solved: useRef<HTMLAudioElement | null>(null),
+    error: useRef<HTMLAudioElement | null>(null),
+    gameover: useRef<HTMLAudioElement | null>(null),
   });
 
   const setCurrentRow = (row: number): void => {
@@ -82,6 +90,40 @@ const Main = (): ReactElement => {
   };
 
   useEffect(() => {
+    if (!gameSounds.solved.current) {
+      gameSounds.solved.current = new Audio("/sounds/solved.mp3");
+      gameSounds.solved.current.load();
+    }
+
+    if (!gameSounds.error.current) {
+      gameSounds.error.current = new Audio("/sounds/error.mp3");
+      gameSounds.error.current.load();
+    }
+
+    if (!gameSounds.gameover.current) {
+      gameSounds.gameover.current = new Audio("/sounds/gameover.mp3");
+      gameSounds.gameover.current.load();
+    }
+
+    return () => {
+      if (gameSounds.solved.current) {
+        gameSounds.solved.current.remove();
+        gameSounds.solved.current = null;
+      }
+
+      if (gameSounds.error.current) {
+        gameSounds.error.current.remove();
+        gameSounds.error.current = null;
+      }
+
+      if (gameSounds.gameover.current) {
+        gameSounds.gameover.current.remove();
+        gameSounds.gameover.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       if (gameState.gameFinished) return;
 
@@ -92,6 +134,8 @@ const Main = (): ReactElement => {
       clearTimeout(timer);
     };
   }, [gameState.timeTaken, gameState.gameFinished]);
+
+  console.log(hasSolvedDailyPreviously);
 
   const getWord = async (): Promise<string> => {
     setGettingWord(true);
@@ -109,9 +153,22 @@ const Main = (): ReactElement => {
 
       if (isDailyBoolean) {
         const hasSolved = await hasUserSolvedDailyWord(fetchedData.word);
+        let fetchedTimeTaken = 0;
+
+        if (hasSolved) {
+          const hasSolvedData = await fetchUserSolvedWord(fetchedData.word);
+
+          if (hasSolvedData) {
+            fetchedTimeTaken = hasSolvedData.timeTaken;
+          }
+        }
+
         setHasSolvedDaily(hasSolved);
         setGameFinished(hasSolved);
         setHasSolvedDailyPreviously(hasSolved);
+        setColumns(fetchedData.word.length);
+        setAnswer(fetchedData.word.toUpperCase());
+        setWordData(fetchedData);
 
         if (hasSolved) {
           setGameState({
@@ -122,11 +179,15 @@ const Main = (): ReactElement => {
               Array(columns).fill(""),
             ),
             gameFinished: true,
-            timeTaken: 0,
+            timeTaken: fetchedTimeTaken,
           });
 
-          for (let i = 0; i < columns; i++) {
-            gameState.attempts[0][i] = fetchedData.word[i].toUpperCase();
+          for (let i = 0; i < fetchedData.word.length; i++) {
+            const newAttempts = gameState.attempts;
+
+            newAttempts[0][i] = fetchedData.word[i].toUpperCase();
+
+            setAttempts(newAttempts);
           }
 
           return fetchedData.word.toUpperCase();
@@ -146,6 +207,7 @@ const Main = (): ReactElement => {
 
       setWordData(fetchedData);
       setAnswer(answer);
+      setColumns(answer.length);
 
       return answer;
     } catch (error) {
@@ -194,6 +256,18 @@ const Main = (): ReactElement => {
     if (guess.length < columns) {
       return; // Ensure the row is filled
     }
+
+    const playWinningSound = (): void => {
+      gameSounds.solved.current?.play();
+    };
+
+    const playErrorSound = (): void => {
+      gameSounds.error.current?.play();
+    };
+
+    const playGameoverSound = (): void => {
+      gameSounds.gameover.current?.play();
+    };
 
     if (guess !== answer) {
       setCurrentRow(gameState.currentRow + 1);
@@ -255,7 +329,18 @@ const Main = (): ReactElement => {
         new Date().toISOString(),
       );
     }
-  }, [gameState, answer, rows, columns]);
+  }, [
+    gameState.attempts,
+    gameState.currentRow,
+    gameState.timeTaken,
+    columns,
+    answer,
+    gameSounds.solved,
+    gameSounds.error,
+    gameSounds.gameover,
+    rows,
+    isDaily,
+  ]);
 
   const handleBackspaceClick = useCallback((): void => {
     if (gameState.currentColumn >= 0) {
@@ -294,48 +379,6 @@ const Main = (): ReactElement => {
       handleLetterClick,
     ],
   );
-
-  const playWinningSound = (): void => {
-    const audio = new Audio("/sounds/solved.mp3");
-
-    audio.play();
-
-    audio.onended = (): void => {
-      audio.remove();
-    };
-
-    audio.onerror = (): void => {
-      console.error("Error playing audio");
-    };
-  };
-
-  const playErrorSound = (): void => {
-    const audio = new Audio("/sounds/error.mp3");
-
-    audio.play();
-
-    audio.onended = (): void => {
-      audio.remove();
-    };
-
-    audio.onerror = (): void => {
-      console.error("Error playing audio");
-    };
-  };
-
-  const playGameoverSound = (): void => {
-    const audio = new Audio("/sounds/gameover.mp3");
-
-    audio.play();
-
-    audio.onended = (): void => {
-      audio.remove();
-    };
-
-    audio.onerror = (): void => {
-      console.error("Error playing audio");
-    };
-  };
 
   const shouldDisplayKeyboard = (): boolean => {
     if (gameState.won) return false;

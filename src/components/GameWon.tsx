@@ -10,15 +10,7 @@ interface GameWonProps {
   hasSolvedDailyPreviously: boolean;
 }
 
-const GameWon: React.FC<GameWonProps> = ({
-  word,
-  attempts,
-  timeTaken,
-  solved,
-  dateSolved,
-  hasSolvedDailyPreviously,
-  hasSolvedDailyWord,
-}) => {
+const GameWon: React.FC<GameWonProps> = () => {
   return (
     <div>
       <h1>Game Won</h1>

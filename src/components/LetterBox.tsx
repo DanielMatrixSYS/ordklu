@@ -74,7 +74,7 @@ const LetterBox: React.FC<LetterBoxProps> = ({
 
     const calculatedBoxWidth = Math.floor(availableWidth / answer.length);
 
-    if (calculatedBoxWidth > 64) {
+    if (calculatedBoxWidth > 64 && answer.length >= 5) {
       setBoxWidth(64);
       return;
     }

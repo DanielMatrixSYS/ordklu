@@ -194,6 +194,55 @@ export const hasUserSolvedDailyWord = async (
   return false;
 };
 
+export const fetchUserSolvedWord = async (word: string): Promise<WordEntry> => {
+  const auth = getAuth();
+  const uid = auth.currentUser?.uid;
+
+  if (!uid) {
+    return {
+      word: "",
+      attempts: 0,
+      timeTaken: 0,
+      solved: false,
+      dateSolved: "",
+    };
+  }
+
+  try {
+    const docRef = doc(db, "users", uid);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      return {
+        word: "",
+        attempts: 0,
+        timeTaken: 0,
+        solved: false,
+        dateSolved: "",
+      };
+    }
+
+    const solvedWords = docSnap.data().solvedDailyWords || [];
+    const solvedWordData = solvedWords.find(
+      (w: WordEntry) => w.word.toUpperCase() === word.toUpperCase(),
+    );
+
+    if (solvedWordData) {
+      return solvedWordData;
+    }
+  } catch (error) {
+    console.error(error);
+  }
+
+  return {
+    word: "",
+    attempts: 0,
+    timeTaken: 0,
+    solved: false,
+    dateSolved: "",
+  };
+};
+
 export const usernameExists = async (username: string): Promise<boolean> => {
   try {
     const userRef = collection(db, "users");

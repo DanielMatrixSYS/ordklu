@@ -7,7 +7,7 @@ const defaultWord: RetrievedWordInterface = {
   category: "all",
   description: "",
   difficulty: 1,
-  word: "",
+  word: "TREGT",
   language: "NO",
 };
 
