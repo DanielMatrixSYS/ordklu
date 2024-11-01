@@ -21,7 +21,11 @@ import Button from "./Button.tsx";
 import { WordInterface, stringToBoolean, formatTime } from "../util/Other.tsx";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import AltButton from "./AltButton.tsx";
-import { fetchDailyWord, fetchCustomWord } from "../util/PostgresqlFunctions";
+import {
+  fetchDailyWord,
+  fetchCustomWord,
+  wordExists,
+} from "../util/PostgresqlFunctions";
 import { AuthContext, AuthContextProps } from "./Auth/AuthContext.tsx";
 
 const alphabetRowOne = "QWERTYUIOPÅ";
@@ -49,6 +53,8 @@ const Main = (): ReactElement => {
     useState<boolean>(false);
   const [wordData, setWordData] = useState<WordInterface>();
   const [gettingWord, setGettingWord] = useState<boolean>(true);
+  const [error, setError] = useState<string>("");
+  const [lastGuess, setLastGuess] = useState<string>("");
 
   const [gameState, setGameState] = useState({
     currentRow: 0,
@@ -88,6 +94,16 @@ const Main = (): ReactElement => {
   const setTimer = (time: number): void => {
     setGameState((prev) => ({ ...prev, timeTaken: time }));
   };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setError("");
+    }, 2500);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [error]);
 
   useEffect(() => {
     if (!gameSounds.solved.current) {
@@ -250,24 +266,46 @@ const Main = (): ReactElement => {
     [gameState, columns],
   );
 
-  const handleEnterClick = useCallback((): void => {
+  const playWinningSound = (): void => {
+    gameSounds.solved.current?.play();
+  };
+
+  const playErrorSound = (): void => {
+    gameSounds.error.current?.play();
+  };
+
+  const playGameoverSound = (): void => {
+    gameSounds.gameover.current?.play();
+  };
+
+  const handleEnterClick = useCallback(async (): Promise<void> => {
     const guess = gameState.attempts[gameState.currentRow].join("") ?? "";
 
     if (guess.length < columns) {
       return; // Ensure the row is filled
     }
 
-    const playWinningSound = (): void => {
-      gameSounds.solved.current?.play();
-    };
+    if (guess === lastGuess) {
+      playErrorSound();
 
-    const playErrorSound = (): void => {
-      gameSounds.error.current?.play();
-    };
+      console.log("hoppet inn her");
 
-    const playGameoverSound = (): void => {
-      gameSounds.gameover.current?.play();
-    };
+      if (!gameState.gameFinished) {
+        setError("Ordet finnes ikke i databasen");
+      }
+
+      return;
+    }
+
+    setLastGuess(guess);
+
+    const exists = await wordExists(guess);
+    if (!exists) {
+      playErrorSound();
+      setError("Ordet finnes ikke i databasen");
+
+      return;
+    }
 
     if (guess !== answer) {
       setCurrentRow(gameState.currentRow + 1);
@@ -546,6 +584,8 @@ const Main = (): ReactElement => {
                 Tid brukt: {formatTime(gameState.timeTaken)}
               </p>
             )}
+
+            {error && <p className="text-sm text-red-600">{error}</p>}
           </>
         )}
 

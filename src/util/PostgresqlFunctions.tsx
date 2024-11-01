@@ -55,3 +55,31 @@ export const fetchCustomWord = async (
 
   return defaultWord;
 };
+
+export const wordExists = async (word: string): Promise<boolean> => {
+  if (!word || word === "") {
+    console.log("No word provided");
+    return false;
+  }
+
+  word = word.toLowerCase();
+
+  try {
+    const response = await axios.get(
+      `${import.meta.env.VITE_SERVER_URL}/${import.meta.env.VITE_SERVER_APIVERSION}/words/exists`,
+      {
+        params: {
+          word,
+        },
+      },
+    );
+
+    if (response.status === 200 && response.data) {
+      return response.data as boolean;
+    }
+  } catch (error) {
+    console.error("Error checking if word exists:", error);
+  }
+
+  return false;
+};
