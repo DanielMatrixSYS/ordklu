@@ -167,5 +167,31 @@ export function createWordsRouter(dataSource: DataSource) {
     },
   );
 
+  router.get("/words/exists", async (req, res) => {
+    const { word } = req.query;
+
+    if (!word || word === "") {
+      return res.status(400).json({ error: "No word provided" });
+    }
+
+    try {
+      const wordRepo = dataSource.getRepository(Words);
+
+      const foundWord = await wordRepo
+        .createQueryBuilder("words")
+        .where("words.word = :word", { word })
+        .limit(1)
+        .getOne();
+
+      if (foundWord) {
+        return res.json(true);
+      } else {
+        return res.json(false);
+      }
+    } catch (error) {
+      return res.status(500).json({ error: "Error checking word" });
+    }
+  });
+
   return router;
 }
